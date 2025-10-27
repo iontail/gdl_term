@@ -15,24 +15,13 @@
   </p>
 </p>
 
----
 
 
----
 
 ## 📝 Abstract
 
 blank
 
-
----
-
-## :sparkles: Data Augmentation
-
-
-아래는 자연스럽게 다듬은 영어 버전입니다:
-
----
 
 ## 1. Installation
 
