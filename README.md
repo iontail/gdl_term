@@ -1,4 +1,5 @@
-# igl_term<p align="center">
+# IGL Term Project
+<p align="center">
   <h1 align="center">Data Augmentation</h1>
   <p align="center">
     <a>Chanhee Lee</a>
