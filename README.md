@@ -55,3 +55,4 @@ To set up the project, follow these steps:
    ```
 
 ---
+We thank [DiffuseMix.Pytorch](https://github.com/khawar-islam/diffuseMix.git) for their amazing works!
