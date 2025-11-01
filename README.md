@@ -54,5 +54,29 @@ To set up the project, follow these steps:
    blank
    ```
 
+
+## 📁 Project Structure
+```
+data/                      # Dataset directory
+data_utils/
+├── dataset.py             # Dataset functions
+└── dataloader.py          # DataLoader implementation
+
+models/
+├── resnet.py              # ResNet model
+├── preactresnet.py        # PreActivation ResNet model
+└── get_model.py           # Model loader
+
+utils/
+├── scheduler.py           # Learning rate scheduler
+└── augmentation/          # Data augmentation modules (!important)
+    └── ...
+
+train.py                   # Main training script
+arguments.py               # CLI argument parser
+trainer.py                 # Trainer class
+text_prompt.py             # Text prompt testing
+```
+
 ---
 We thank [DiffuseMix.Pytorch](https://github.com/khawar-islam/diffuseMix.git) for their amazing works!
