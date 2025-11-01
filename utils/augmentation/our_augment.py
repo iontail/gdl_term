@@ -1,15 +1,17 @@
 import os
-from torch.utils.data import Dataset
-from PIL import Image
 import random
-from .util_func import Utils
+
+from PIL import Image
+from torch.utils.data import Dataset
+
+from .utils_func import Utils
 
 
 """
 Need to change this code
 """
 
-class DiffuseMix(Dataset):
+class NewAugment(Dataset):
     def __init__(self, original_dataset, num_images, guidance_scale, fractal_imgs, idx_to_class, prompts, model_handler):
         self.original_dataset = original_dataset
         self.idx_to_class = idx_to_class
