@@ -8,16 +8,14 @@ def parse_arguments():
     # model
     parser.add_argument('--model', type=str, default='resnet50')
     parser.add_argument('--device', type=str, default='auto')
-
-    # model specified arguments
-    parser.add_argument('--growth_rate', type=int, default=12,
-                        help="Growth rate for DenseNet100")
-
+    
     # data
     parser.add_argument('--data', type=str, default='cifar10')
     parser.add_argument('--num_classes', type=int, default=10)
     parser.add_argument('--img_size', type=int, default=32)
     parser.add_argument('--default_augment', action='store_true')
+    parser.add_argument('--train_dir', required=True)
+    parser.add_argument('--val_dir', required=True)
 
     # training
     parser.add_argument('--resume', action='store_true',

@@ -40,13 +40,13 @@ def main():
     _setup_reproducibility(42)
 
     train_dl = get_dataloader(name=args.data,
-                              root='./data',
+                              root=args.train_dir,
                               train=True,
                               args=args
                               )
     
     val_dl = get_dataloader(name=args.data,
-                            root='./data',
+                            root=args.val_dir,
                             train=False,
                             args=args
                             )
