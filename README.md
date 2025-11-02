@@ -23,6 +23,10 @@
 
 blank
 
+## ✅ TO DO List
+- [ ] Debug the default learning framework (code file)
+- [ ] Implement our augmentation methods
+- [ ] Find the optimal prompts
 
 ## 1. Installation
 
