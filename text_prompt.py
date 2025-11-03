@@ -33,9 +33,9 @@ class Diffusion_Prompt(Dataset):
         os.makedirs(original_resized_dir, exist_ok=True)
         os.makedirs(generated_dir, exist_ok=True)
 
-        for idx, (img_path, label_idx) in enumerate(self.original_dataset.samples):
+        for _, (img_path, label_idx) in enumerate(self.original_dataset.samples):
 
-            label = self.idx_to_class[label_idx]  # Use folder name as label
+            label = self.idx_to_class[label_idx]  # use folder name as label
 
             original_img = Image.open(img_path).convert('RGB')
             original_img = original_img.resize((256, 256))
