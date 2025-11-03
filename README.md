@@ -4,7 +4,7 @@
   <p align="center">
     <a>Chanhee Lee</a>
     ·
-    <a>Junghwan Cho</a>
+    <a>Jeonghwan Cho</a>
     ·
     <a>Suhyun Kim</a>
     ·
