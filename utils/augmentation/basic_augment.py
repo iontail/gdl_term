@@ -49,4 +49,4 @@ def mix_fractal(x, fractal_img, alpha: float = 0.2, active_lam: bool = False):
     return mix_data, lam
 
 def mix_fractal_criterion(criterion, preds, targets, lam):
-    return criterion(preds, targets) * lam
+    return criterion(preds, targets) * (1-lam)
