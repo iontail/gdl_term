@@ -3,11 +3,12 @@ import torch.nn as nn
 import os
 import wandb
 
+from datetime import datetime
 from tqdm import tqdm
 from torch.utils.data import DataLoader
 from torch.optim import SGD, Adam, AdamW
 
-from utils import get_scheduler
+from utils import get_scheduler, mix_fractal, mix_fractal_criterion
 
 
 """
@@ -47,7 +48,13 @@ class Trainer:
         self.best = float('-inf')
 
         os.makedirs('./checkpoints', exist_ok=True)
-        prefix = f"{self.args.model.lower()}_best.pth"
+
+        if self.args.resume:
+            prefix = args.checkpoint_path
+        else:
+            start_time = datetime.now().strftime("%m%d_%H%M")
+            prefix = f"{self.args.model.lower()}_{start_time}.pth"
+            
         self.save_path = os.path.join('./checkpoints', prefix)
         self.data_name = args.data 
         
@@ -55,7 +62,7 @@ class Trainer:
         self.logs = {'train_loss': [], 'train_acc': [], 'val_loss': [], 'val_acc': []}
         self._setup_training() # this is for resuming training
 
-    def train(self, train_dl, val_dl):
+    def train(self, train_dl, val_dl, fractal_img=None):
 
         self.use_wandb = self.args.use_wandb
         if self.use_wandb:
@@ -83,7 +90,7 @@ class Trainer:
         for epoch in range(self.start_epoch, self.epochs):
             
             self.model.train()
-            loss, acc = self._forward_epoch(train_dl)
+            loss, acc = self._forward_epoch(train_dl, fractal_img)
 
             train_metrics = {'loss': loss, 'acc': acc}
             train_loss_log.append(loss)
@@ -157,7 +164,7 @@ class Trainer:
                 'best': best
             }, step=epoch)
 
-    def _forward_epoch(self, loader):
+    def _forward_epoch(self, loader, fractal_img=None):
         samples = 0
         correct = 0
         total_loss = 0
@@ -168,8 +175,15 @@ class Trainer:
             targets = batch['targets'].to(self.device)
             samples += data.size(0)
 
+            if (self.args.mix) and (fractal_img is not None):
+                data, lam = mix_fractal(data, fractal_img, active_alpha=self.args.active_lam)
+
             outputs = self.model(data)
-            loss = self.criterion(outputs, targets)
+
+            if self.args.mix and self.args.active_lam:
+                loss = mix_fractal_criterion(self.criterion, outputs, targets, lam)
+            else:
+                loss = self.criterion(outputs, targets)
             total_loss += loss.item() * data.size(0)
 
             if self.model.training:
