@@ -61,15 +61,16 @@ def main():
                       )
     
     model.to(device)
-
+    
     if args.resume:
+        # relative path
         args.checkpoint_path = "f'./checkpoints/{}.pth' "
     else:
         args.checkpoint_path = None
     
     trainer = Trainer(model, args, device)
     
-    trainer.train(train_dl, val_dl)
+    trainer.train(train_dl, val_dl, fractal_img=None)
 
     final_loss, final_acc = trainer.evaluate(val_dl)
     print(f"Final Results on Validation: Loss = {final_loss:.4f} | Accuracy = {final_acc:.2f}%")

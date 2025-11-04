@@ -34,32 +34,25 @@ class Trainer:
 
         self.milestones = [82, 123] # if you specify milestone, then define this instance variable
         
-        if not self.args.resume:
-            self.scheduler = get_scheduler(optimizer=self.optimizer,
-                                           scheduler_name=args.scheduler,
-                                           warmup_epochs=args.warmup_epochs,
-                                           warmup_start_lr=args.warmup_start_lr,
-                                           total_epochs=args.epochs,
-                                           min_lr=1e-6,
-                                           milestones=self.milestones
-                                           )
-        
         self.val_freq = args.val_freq
         self.best = float('-inf')
 
         os.makedirs('./checkpoints', exist_ok=True)
 
         if self.args.resume:
-            prefix = args.checkpoint_path
+            self.save_path = args.checkpoint_path
         else:
             start_time = datetime.now().strftime("%m%d_%H%M")
             prefix = f"{self.args.model.lower()}_{start_time}.pth"
+            self.save_path = os.path.join('./checkpoints', prefix)
             
-        self.save_path = os.path.join('./checkpoints', prefix)
+        
+        self.log_save_path = self.save_path.replace('.pth', '_logs.pt')
         self.data_name = args.data 
         
         self.start_epoch = 0
         self.logs = {'train_loss': [], 'train_acc': [], 'val_loss': [], 'val_acc': []}
+        
         self._setup_training() # this is for resuming training
 
     def train(self, train_dl, val_dl, fractal_img=None):
@@ -76,7 +69,8 @@ class Trainer:
                     'scheduler': self.args.scheduler,
                     'batch_size': self.args.batch_size,
                     'lr': self.args.lr,
-                    'cutmix': self.args.cutmix,
+                    'mix': self.args.mix,
+                    'active_lam': self.args.active_lam,
                     'weight_decay': self.args.weight_decay
                 }
             )
@@ -84,9 +78,9 @@ class Trainer:
         train_loss_log = self.logs['train_loss']
         train_acc_log = self.logs['train_acc']
         val_loss_log = self.logs['val_loss']
-        val_acc_log = self.logs['val_loss']
+        val_acc_log = self.logs['val_acc']
         
-        best = self.best
+
         for epoch in range(self.start_epoch, self.epochs):
             
             self.model.train()
@@ -97,18 +91,19 @@ class Trainer:
             train_acc_log.append(acc)
             
 
+            val_metrics = {}
             if ((epoch + 1) % self.val_freq == 0) or (epoch == self.epochs - 1):
                 
                 self.model.eval()
                 with torch.no_grad():
                     val_loss, val_acc = self._forward_epoch(val_dl)
-                    val_metrics = {'loss': val_loss, 'acc': val_acc}
-                    val_loss_log.append(val_loss)
-                    val_acc_log.append(val_acc)
+                val_metrics = {'loss': val_loss, 'acc': val_acc}
+                val_loss_log.append(val_loss)
+                val_acc_log.append(val_acc)
 
                 # save checkpoint
-                if val_acc > best + 1e-3:
-                    best = val_acc
+                if val_acc > self.best + 1e-3:
+                    self.best = val_acc
                     logs = {
                         'train_loss': train_loss_log,
                         'train_acc': train_acc_log,
@@ -120,18 +115,16 @@ class Trainer:
                         'epoch': epoch,
                         'model_state_dict': self.model.state_dict(),
                         'optimizer_state_dict': self.optimizer.state_dict(),
-                        'best_val_acc': best,
+                        'best_val_acc': self.best,
                         'logs': logs
                     }, self.save_path)
 
-            else:
-                val_metrics = {}
 
             if self.scheduler is not None:
                 self.scheduler.step()
 
             all_metrics = {'train': train_metrics, 'val': val_metrics}
-            self._log_metrics(all_metrics, best, epoch)
+            self._log_metrics(all_metrics, self.best, epoch)
 
             # saving logs
             torch.save(all_metrics, self.log_save_path)
@@ -184,6 +177,7 @@ class Trainer:
                 loss = mix_fractal_criterion(self.criterion, outputs, targets, lam)
             else:
                 loss = self.criterion(outputs, targets)
+                
             total_loss += loss.item() * data.size(0)
 
             if self.model.training:
@@ -243,19 +237,19 @@ class Trainer:
             
             checkpoints = torch.load(self.args.checkpoint_path, map_location=self.device)
 
-            self.model.load_state_dict(checkpoints['model'])
+            self.model.load_state_dict(checkpoints['model_state_dict'])
             self.optimizer.load_state_dict(checkpoints['optimizer_state_dict'])
             self.best = checkpoints['best_val_acc']
-            self.start_epoch = checkpoints['epoch']
+            self.start_epoch = checkpoints['epoch'] + 1
 
             self.logs = checkpoints['logs']
 
-            get_scheduler(optimizer=self.optimizer,
-                          scheduler_name=self.args.scheduler,
-                          warmup_epochs=self.args.warmup_epochs,
-                          warmup_start_lr=self.args.warmup_start_lr,
-                          total_epochs=self.args.epochs,
-                          min_lr=1e-6,
-                          milestones=self.milestones
-                          )
+        get_scheduler(optimizer=self.optimizer,
+                        scheduler_name=self.args.scheduler,
+                        warmup_epochs=self.args.warmup_epochs,
+                        warmup_start_lr=self.args.warmup_start_lr,
+                        total_epochs=self.args.epochs,
+                        min_lr=1e-6,
+                        milestones=self.milestones
+                        )
         
