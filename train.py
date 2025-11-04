@@ -6,6 +6,7 @@ from arguments import parse_arguments
 from data_utils.dataloader import get_dataloader
 from models import get_model
 from trainer import Trainer
+from utils.augmentation import Utils
 
 
 def _setup_reproducibility(seed: int = 42):
@@ -61,16 +62,21 @@ def main():
                       )
     
     model.to(device)
-    
+
     if args.resume:
         # relative path
         args.checkpoint_path = "f'./checkpoints/{}.pth' "
     else:
         args.checkpoint_path = None
+
+
+    utils = Utils()
+    #fractal_img = utils.load_fractal_images('./data/deviantart')
+    fractal_img = None
     
     trainer = Trainer(model, args, device)
     
-    trainer.train(train_dl, val_dl, fractal_img=None)
+    trainer.train(train_dl, val_dl, fractal_img=fractal_img)
 
     final_loss, final_acc = trainer.evaluate(val_dl)
     print(f"Final Results on Validation: Loss = {final_loss:.4f} | Accuracy = {final_acc:.2f}%")

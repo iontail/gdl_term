@@ -177,7 +177,7 @@ class Trainer:
                 loss = mix_fractal_criterion(self.criterion, outputs, targets, lam)
             else:
                 loss = self.criterion(outputs, targets)
-                
+
             total_loss += loss.item() * data.size(0)
 
             if self.model.training:

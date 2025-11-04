@@ -28,16 +28,16 @@ def mixup_criterion(criterion, pred, y_a, y_b, lam):
 
 #########################
 # below are for experiments
-def mix_fractal(x, fractal_imgs, alpha: float = 0.2, active_lam: bool = False):
+def mix_fractal(x, fractal_img, alpha: float = 0.2, active_lam: bool = False):
     # fractal_data: list[PIL.Image]
     B, C, H, W = x.shape
-    N = len(fractal_imgs)
+    N = len(fractal_img)
     device, dtype = x.device, x.dtype
 
     idx = torch.randint(0, N, (B,)) 
 
     to_tensor = transforms.ToTensor()
-    overlay_imgs = [to_tensor(fractal_imgs[i]).resize_((C, H, W)) for i in idx]
+    overlay_imgs = [to_tensor(fractal_img[i]).resize_((C, H, W)) for i in idx]
     overlay = torch.stack(overlay_imgs).to(device=device, dtype=dtype)
 
     if active_lam:
