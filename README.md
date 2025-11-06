@@ -4,8 +4,8 @@
 0.  *** puzzlemix repo 참고 ***
 1.  **리포지토리 클론:**
     ```bash
-    git clone [https://github.com/](https://github.com/)[ai-cho]/[GDTP].git
-    cd [GDTP]
+    git clone https://github.com/ai-cho/GDTP.git
+    cd GDTP
     ```
 
 2.  **Conda 환경 생성 및 PyTorch 설치:**
