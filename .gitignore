@@ -16,3 +16,4 @@ figures/.DS_Store
 !imagenet/*
 imagenet/checkpoint/*
 output
+checkpoint
