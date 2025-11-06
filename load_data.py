@@ -10,7 +10,8 @@ from operator import __or__
 def load_data_subset(batch_size,
                      workers,
                      dataset,
-                     data_train_dir,
+                     data_train_org_dir,
+                     data_train_aug_dir,
                      data_test_dir,
                      labels_per_class=100,
                      valid_labels_per_class=500,
@@ -54,7 +55,7 @@ def load_data_subset(batch_size,
     # dataset
     if dataset == 'cifar10':
         pass
-        train_data = datasets.CIFAR10(data_train_dir,
+        train_data = datasets.CIFAR10(data_train_org_dir,
                                       train=True,
                                       transform=train_transform,
                                       download=True)
@@ -87,38 +88,31 @@ def load_data_subset(batch_size,
         # print(f"Found {num_classes} classes in {train_root}")
         from torch.utils.data import ConcatDataset
         
-        train_root_1 = "/workspace/_GDtp/diffuseMix/result/blended"  # ✍️ 경로 1 수정
-        train_root_2 = "/workspace/_GDtp/dataset_download/datasets/cifar100/train"  # ✍️ 경로 2 수정
-        test_root = data_test_dir # (기존 변수를 사용하거나 경로를 직접 지정)
+        train_root_1 = data_train_org_dir
+        train_root_2 = data_train_aug_dir
+        test_root = data_test_dir 
 
-        # 2. 경로 존재 여부 확인
         if not os.path.exists(train_root_1) or not os.path.exists(train_root_2):
             raise FileNotFoundError(f"One of the train directories not found. Check paths.")
         if not os.path.exists(test_root):
             raise FileNotFoundError(f"Test directory not found: {test_root}")
 
-        # 3. 각 경로에 대해 ImageFolder 데이터셋을 개별적으로 생성
         print(f"Loading train data from: {train_root_1}")
         train_data_1 = datasets.ImageFolder(train_root_1, transform=train_transform)
         
         print(f"Loading train data from: {train_root_2}")
         train_data_2 = datasets.ImageFolder(train_root_2, transform=train_transform)
 
-        # 4. ⚠️ (매우 중요) 두 데이터셋의 클래스 리스트와 순서가 완벽히 동일한지 확인합니다.
         if train_data_1.classes != train_data_2.classes:
             raise ValueError("Class list/order mismatch between the two train directories. "
                              "This will cause incorrect labels.")
-        print(len(train_data_1), len(train_data_2))
-        # 5. ConcatDataset으로 두 데이터셋을 합칩니다.
+            
         train_data = ConcatDataset([train_data_1, train_data_2])
         print(f"Combined two train datasets. Total size: {len(train_data)}")
 
-        # 6. (핵심) get_sampler가 작동하도록 .targets와 .classes 속성을 수동으로 만들어줍니다.
-        #    (두 ImageFolder의 targets 리스트를 np.concatenate로 합칩니다)
         train_data.targets = np.concatenate([train_data_1.targets, train_data_2.targets])
-        train_data.classes = train_data_1.classes  # (클래스 정보는 동일하므로 train_data_1의 것을 사용)
+        train_data.classes = train_data_1.classes  
         
-        # 7. 테스트 데이터 로드 (이전과 동일)
         test_data = datasets.ImageFolder(test_root, transform=test_transform)
         
         num_classes = len(train_data.classes)

@@ -15,4 +15,4 @@ saliency.py
 figures/.DS_Store
 !imagenet/*
 imagenet/checkpoint/*
-
+output

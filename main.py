@@ -44,14 +44,21 @@ parser.add_argument('--dataset',
                     default='cifar10',
                     choices=['cifar10', 'cifar100', 'tiny-imagenet-200'],
                     help='Choose between Cifar10/100 and Tiny-ImageNet.')
-parser.add_argument('--train_dir',
+parser.add_argument('--train_org_dir',
                     type=str,
                     default='cifar10',
                     help='file where results are to be written')
+
+parser.add_argument('--train_aug_dir',
+                    type=str,
+                    default='diffusemix',
+                    help='file where results are to be written')
+
 parser.add_argument('--test_dir',
                     type=str,
                     default='cifar10',
                     help='file where results are to be written')
+
 parser.add_argument('--root_dir',
                     type=str,
                     default='experiments',
@@ -513,7 +520,8 @@ def main():
         args.batch_size,
         2,
         args.dataset,
-        args.train_dir,
+        args.train_org_dir,
+        args.train_aug_dir,
         args.test_dir,
         labels_per_class=args.labels_per_class,
         valid_labels_per_class=args.valid_labels_per_class,
