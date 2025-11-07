@@ -306,7 +306,6 @@ softmax = nn.Softmax(dim=1).cuda()
 criterion = nn.CrossEntropyLoss().cuda()
 criterion_batch = nn.CrossEntropyLoss(reduction='none').cuda()
 
-
 def train(train_loader, model, optimizer, epoch, args, log, mp=None):
     '''train given model and dataloader'''
     batch_time = AverageMeter()
