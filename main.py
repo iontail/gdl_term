@@ -103,7 +103,7 @@ parser.add_argument('--in_batch',
                     type=str2bool,
                     default=False,
                     help='whether to use different lambdas in batch')
-parser.add_argument('--mixup_alpha', type=float, help='alpha parameter for mixup')
+parser.add_argument('--mixup_alpha', type=float, default=0, help='alpha parameter for mixup')
 parser.add_argument('--dropout',
                     type=str2bool,
                     default=False,
