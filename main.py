@@ -19,6 +19,11 @@ from load_data import load_data_subset
 from logger import plotting, copy_script_to_folder, AverageMeter, RecorderMeter, time_string, convert_secs2time
 import models
 from multiprocessing import Pool
+from datetime import datetime
+
+import wandb
+from hybrid import Hybrid # part of DiffuseMix
+from utils import Utils
 
 model_names = sorted(
     name for name in models.__dict__
@@ -48,6 +53,10 @@ parser.add_argument('--train_org_dir',
                     type=str,
                     default='cifar10',
                     help='file where results are to be written')
+parser.add_argument('--fractal_img_dir',
+                    type=str,
+                    default='fractal_images',
+                    help='directory containing fractal images')
 
 parser.add_argument('--train_aug_dir',
                     type=str,
@@ -87,7 +96,7 @@ parser.add_argument('--epochs', type=int, default=300, help='number of epochs to
 parser.add_argument('--train',
                     type=str,
                     default='vanilla',
-                    choices=['vanilla', 'mixup', 'mixup_hidden'],
+                    choices=['vanilla', 'mixup', 'mixup_hidden', 'fractal_mixup'],
                     help='mixup layer')
 parser.add_argument('--in_batch',
                     type=str2bool,
@@ -125,15 +134,22 @@ parser.add_argument('--adv_p', type=float, default=0.0, help='adversarial traini
 parser.add_argument('--clean_lam', type=float, default=0.0, help='clean input regularization')
 parser.add_argument('--mp', type=int, default=8, help='multi-process for graphcut (CPU)')
 
+#fractal mixup
+parser.add_argument('--fractal_alpha', type=float, default=0.2, help='fractal mixup alpha')
+parser.add_argument('--active_lam',
+                    type=str2bool,
+                    default=False,
+                    help='whether to use active lam for fractal mixup')
+
 # training
-parser.add_argument('--batch_size', type=int, default=100)
+parser.add_argument('--batch_size', type=int, default=256)
 parser.add_argument('--learning_rate', type=float, default=0.1)
 parser.add_argument('--momentum', type=float, default=0.9)
 parser.add_argument('--decay', type=float, default=0.0001, help='weight decay (L2 penalty)')
 parser.add_argument('--schedule',
                     type=int,
                     nargs='+',
-                    default=[150, 225],
+                    default=[100, 200],
                     help='decrease learning rate at these epochs')
 parser.add_argument(
     '--gammas',
@@ -141,6 +157,10 @@ parser.add_argument(
     nargs='+',
     default=[0.1, 0.1],
     help='LR is multiplied by gamma on schedule, number of gammas should be equal to schedule')
+
+# log
+parser.add_argument('--use_wandb', action='store_true', help='use wandb for logging')
+
 
 # Checkpoints
 parser.add_argument('--print_freq',
@@ -261,17 +281,18 @@ def print_log(print_string, log, end='\n'):
         log.flush()
 
 
-def save_checkpoint(state, is_best, save_path, filename):
+def save_checkpoint(state, is_best, save_path, filename, model_name: str):
     '''save checkpoint'''
     filename = os.path.join(save_path, filename)
     torch.save(state, filename)
+
     if is_best:
-        bestname = os.path.join(save_path, 'model_best.pth.tar')
+        bestname = os.path.join(save_path, f'{model_name}_best.pth.tar')
         shutil.copyfile(filename, bestname)
 
 
 def adjust_learning_rate(optimizer, epoch, gammas, schedule):
-    """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
+    """Sets the learning rate to the initial LR decayed by 10"""
     lr = args.learning_rate
     assert len(gammas) == len(schedule), "length of gammas and schedule should be equal"
     for (gamma, step) in zip(gammas, schedule):
@@ -306,7 +327,7 @@ softmax = nn.Softmax(dim=1).cuda()
 criterion = nn.CrossEntropyLoss().cuda()
 criterion_batch = nn.CrossEntropyLoss(reduction='none').cuda()
 
-def train(train_loader, model, optimizer, epoch, args, log, mp=None):
+def train(train_loader, model, optimizer, epoch, args, log, mp=None, fractal_imgs=None):
     '''train given model and dataloader'''
     batch_time = AverageMeter()
     data_time = AverageMeter()
@@ -407,6 +428,12 @@ def train(train_loader, model, optimizer, epoch, args, log, mp=None):
             input_var, target_var = Variable(input), Variable(target)
             output, reweighted_target = model(input_var, target_var, mixup_hidden=True, args=args)
             loss = bce_loss(softmax(output), reweighted_target)
+
+        elif args.train == 'fractal_mixup':
+            input_var, target_var = Variable(input), Variable(target)
+            output, target_reweighted = model(input_var, target_var, fractal_img=fractal_imgs, alpha=args.fractal_alpha, active_lam=args.active_lam)
+            loss = bce_loss(softmax(output), target_reweighted)
+
         else:
             raise AssertionError('wrong train type!!')
 
@@ -480,7 +507,7 @@ def validate(val_loader, model, log, fgsm=False, eps=4, rand_init=False, mean=No
         print_log(
             '  **Test** Prec@1 {top1.avg:.3f} Prec@5 {top5.avg:.3f} Error@1 {error1:.3f} Loss: {losses.avg:.3f} '
             .format(top1=top1, top5=top5, error1=100 - top1.avg, losses=losses), log)
-    return top1.avg, losses.avg
+    return top1.avg, top5.avg, losses.avg
 
 
 best_acc = 0
@@ -525,6 +552,8 @@ def main():
         labels_per_class=args.labels_per_class,
         valid_labels_per_class=args.valid_labels_per_class,
         mixup_alpha=args.mixup_alpha)
+    
+    fractal_imgs = Utils.load_fractal_images(args.fractal_img_dir)
 
     if args.dataset == 'tiny-imagenet-200':
         stride = 2
@@ -547,6 +576,28 @@ def main():
         args.labels_per_class = 500
     else:
         raise AssertionError('Given Dataset is not supported!')
+    
+
+    start_time = datetime.now().strftime("%m%d_%H%M")
+    model_save_name  = f"{args.arch.lower()}_{start_time}"
+    # initiate wandb
+    if args.use_wandb:
+        wandb.init(
+            project=f"GDTP",
+            name=model_save_name,
+            config={
+                'model': args.arch,
+                'data': args.dataset,
+                'optimizer': "SGD",
+                'scheduler': "MultiStepLR",
+                'batch_size': args.batch_size,
+                'lr': args.learning_rate,
+                'fractal_mixup': args.fractal_mixup,
+                'fractal_alpha': args.fractal_alpha,
+                'fractal_active_lam': args.fractal_active_lam,
+                'weight_decay': args.decay
+            }
+        )
 
     # create model
     print_log("=> creating model '{}'".format(args.arch), log)
@@ -593,8 +644,10 @@ def main():
     epoch_time = AverageMeter()
     train_loss = []
     train_acc = []
+    train_acct5 = []
     test_loss = []
     test_acc = []
+    test_acct5 = []
 
     for epoch in range(args.start_epoch, args.epochs):
         current_learning_rate = adjust_learning_rate(optimizer, epoch, args.gammas, args.schedule)
@@ -607,18 +660,20 @@ def main():
                 + ' [Best : Accuracy={:.2f}, Error={:.2f}]'.format(recorder.max_accuracy(False), 100-recorder.max_accuracy(False)), log)
 
         # train for one epoch
-        tr_acc, tr_acc5, tr_los = train(train_loader, net, optimizer, epoch, args, log, mp=mp)
+        tr_acc, tr_acc5, tr_los = train(train_loader, net, optimizer, epoch, args, log, mp=mp, fractal_imgs=fractal_imgs)
 
         # evaluate on validation set
-        val_acc, val_los = validate(test_loader, net, log)
+        val_acc, val_acc5, val_los = validate(test_loader, net, log)
         if (epoch % 50) == 0 and args.adv_p > 0:
             _, _ = validate(test_loader, net, log, fgsm=True, eps=4, mean=args.mean, std=args.std)
             _, _ = validate(test_loader, net, log, fgsm=True, eps=8, mean=args.mean, std=args.std)
 
         train_loss.append(tr_los)
         train_acc.append(tr_acc)
+        train_acct5.append(tr_acc5)
         test_loss.append(val_los)
         test_acc.append(val_acc)
+        test_acct5.append(val_acc5)
 
         is_best = False
         if val_acc > best_acc:
@@ -655,6 +710,17 @@ def main():
         pickle.dump(train_log, open(os.path.join(exp_dir, 'log.pkl'), 'wb'))
         # plotting(exp_dir)
 
+        if args.use_wandb:
+            wandb.log({
+                f'{args.dataset}/train/loss': tr_los,
+                f'{args.dataset}/train/acc': tr_acc,
+                f'{args.dataset}/train/acc5': tr_acc5,
+                f'{args.dataset}/val/loss': val_los,
+                f'{args.dataset}/val/acc': val_acc,
+                f'{args.dataset}/val/acc5': val_acc5,
+                f'{args.dataset}learning_rate': current_learning_rate
+            }, step=epoch)
+
     acc_var = np.maximum(
         np.max(test_acc[-10:]) - np.median(test_acc[-10:]),
         np.median(test_acc[-10:]) - np.min(test_acc[-10:]))
@@ -664,6 +730,9 @@ def main():
 
     if not args.log_off:
         log.close()
+
+    if args.use_wandb:
+        wandb.finish()
 
 
 if __name__ == '__main__':

@@ -123,7 +123,10 @@ class PreActResNet(nn.Module):
                 noise=None,
                 adv_mask1=0,
                 adv_mask2=0,
-                mp=None):
+                mp=None,
+                fractal_img=None,
+                alpha=0.2,
+                active_lam=False):
 
         if mixup_hidden:
             layer_mix = random.randint(0, 2)
@@ -146,6 +149,14 @@ class PreActResNet(nn.Module):
                                                    adv_mask1=adv_mask1,
                                                    adv_mask2=adv_mask2,
                                                    mp=mp)
+        if fractal_img is not None:
+            out, target_reweighted = mixup_process(out,
+                                     target_reweighted,
+                                     args=args,
+                                     fractal_img=fractal_img,
+                                     alpha=alpha,
+                                     active_lam=active_lam)
+            layer_mix = 0
 
         out = self.conv1(out)
         out = self.layer1(out)
