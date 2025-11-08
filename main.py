@@ -605,7 +605,7 @@ def main():
                 'lr': args.learning_rate,
                 'fractal_mixup': True if args.train == 'fractal_mixup' else False,
                 'fractal_alpha': args.fractal_alpha,
-                'fractal_active_lam': args.fractal_active_lam,
+                'fractal_active_lam': args.active_lam,
                 'weight_decay': args.decay
             }
         )
