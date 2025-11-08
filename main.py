@@ -135,9 +135,7 @@ parser.add_argument('--mp', type=int, default=8, help='multi-process for graphcu
 
 #fractal mixup
 parser.add_argument('--fractal_alpha', type=float, default=0.2, help='fractal mixup alpha')
-parser.add_argument('--active_lam',
-                    type=str2bool,
-                    default=False,
+parser.add_argument('--active_lam', action='store_true',
                     help='whether to use active lam for fractal mixup')
 
 # training
@@ -562,7 +560,7 @@ def main():
             transforms.Resize((256, 256)),
             transforms.ToTensor(),
         ])
-        
+
     fractal_imgs = datasets.ImageFolder(root=args.fractal_img_dir, transform=fractal_transforms)
 
 
