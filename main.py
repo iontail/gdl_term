@@ -22,8 +22,7 @@ from multiprocessing import Pool
 from datetime import datetime
 
 import wandb
-from hybrid import Hybrid # part of DiffuseMix
-from utils import Utils
+from torchvision import datasets, transforms
 
 model_names = sorted(
     name for name in models.__dict__
@@ -553,7 +552,19 @@ def main():
         valid_labels_per_class=args.valid_labels_per_class,
         mixup_alpha=args.mixup_alpha)
     
-    fractal_imgs = Utils.load_fractal_images(args.fractal_img_dir)
+    if args.dataset in ['cifar10', 'cifar100']:
+        fractal_transforms = transforms.Compose([
+            transforms.Resize((32, 32)),
+            transforms.ToTensor(),
+        ])
+    else:
+        fractal_transforms = transforms.Compose([
+            transforms.Resize((256, 256)),
+            transforms.ToTensor(),
+        ])
+        
+    fractal_imgs = datasets.ImageFolder(root=args.fractal_img_dir, transform=fractal_transforms)
+
 
     if args.dataset == 'tiny-imagenet-200':
         stride = 2

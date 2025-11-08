@@ -6,12 +6,16 @@ from PIL import Image
 class Utils:
 
     @staticmethod
-    def load_fractal_images(fractal_img_dir):
+    def load_fractal_images(fractal_img_dir, is_data_small):
         if os.path.exists(fractal_img_dir) is False:
             raise ValueError(f"Fractal image directory {fractal_img_dir} does not exist.")
         
         fractal_img_paths = [os.path.join(fractal_img_dir, fname) for fname in os.listdir(fractal_img_dir) if fname.endswith(('.png', '.jpg', '.jpeg'))]
-        return [Image.open(path).convert('RGB').resize((256, 256)) for path in fractal_img_paths]
+
+        if is_data_small:
+            return [Image.open(path).convert('RGB').resize((32, 32)) for path in fractal_img_paths]
+        else:
+            return [Image.open(path).convert('RGB').resize((256, 256)) for path in fractal_img_paths]
 
     @staticmethod
     def blend_images_with_resize(base_img, overlay_img, alpha=0.20):

@@ -82,7 +82,7 @@ def mixup_process(out,
         #fractal_img = torchvision.datasets.ImageFolder
         out, lam = mix_fractal(out, fractal_img=fractal_img, alpha=fractal_alpha, active_lam=active_lam)
     
-    if hidden:
+    elif hidden:
         # Manifold Mixup
         out = out * lam + out[indices] * (1 - lam)
         ratio = torch.ones(out.shape[0], device='cuda') * lam
@@ -124,7 +124,7 @@ def mixup_process(out,
 
 
     if fractal_img is not None and active_lam:
-        target_reweighted = target_reweighted * lam.unsqueeze(-1)
+        target_reweighted = target_reweighted * lam
     else:
         target_reweighted = target_reweighted * ratio.unsqueeze(-1) + target_shuffled_onehot * (
             1 - ratio.unsqueeze(-1))
