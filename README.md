@@ -24,7 +24,14 @@
 
 3.  **추가 라이브러리 설치:**
     ```bash
-    pip install gco-wrapper matplotlib numpy six
+    pip install gco-wrapper matplotlib numpy six wandb tqdm gdown
+    wandb login
+
+    mkdir datasets
+    cd datasets
+    gdown --folder https://drive.google.com/drive/folders/1o5iww1y4xWksbCpItkl1U4-DQ7ri4uDQ?usp=drive_link
+    gdown --folder 
+    gdown --folder 
     ```
 
 ---
