@@ -75,7 +75,6 @@ def mixup_process(out,
     block_num = 2**np.random.randint(1, 5)
     indices = np.random.permutation(out.size(0))
 
-    print(mixup_alpha)
     lam = get_lambda(mixup_alpha)
 
     if fractal_img is not None:
