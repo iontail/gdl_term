@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 import gco
+from active_fractal import mix_fractal
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -49,7 +50,11 @@ def mixup_process(out,
                   noise=None,
                   adv_mask1=0,
                   adv_mask2=0,
-                  mp=None):
+                  mp=None,
+                  fractal_img=None,
+                  fractal_alpha: float = 0.2,
+                  active_lam:bool = None,
+                  ):
     '''various mixup process'''
     if args is not None:
         mixup_alpha = args.mixup_alpha
@@ -72,6 +77,11 @@ def mixup_process(out,
 
     lam = get_lambda(mixup_alpha)
 
+    if fractal_img is not None:
+        # Fractal Mixup
+        #fractal_img = list[PIL.Image]
+        out, lam = mix_fractal(out, fractal_img=fractal_img, alpha=fractal_alpha, active_lam=active_lam)
+    
     if hidden:
         # Manifold Mixup
         out = out * lam + out[indices] * (1 - lam)
@@ -111,8 +121,13 @@ def mixup_process(out,
             ratio = torch.ones(out.shape[0], device='cuda') * lam
 
     target_shuffled_onehot = target_reweighted[indices]
-    target_reweighted = target_reweighted * ratio.unsqueeze(-1) + target_shuffled_onehot * (
-        1 - ratio.unsqueeze(-1))
+
+
+    if fractal_img is not None and active_lam:
+        target_reweighted = target_reweighted * lam.unsqueeze(-1)
+    else:
+        target_reweighted = target_reweighted * ratio.unsqueeze(-1) + target_shuffled_onehot * (
+            1 - ratio.unsqueeze(-1))
 
     return out, target_reweighted
 
