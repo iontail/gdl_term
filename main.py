@@ -23,7 +23,7 @@ from multiprocessing import Pool
 from datetime import datetime
 
 import wandb
-import tqdm
+from tqdm import tqdm
 from torchvision import datasets, transforms
 
 model_names = sorted(
