@@ -99,8 +99,8 @@ def load_data_subset(batch_size,
 
         print(f"Loading train data from: {train_root_1}")
         train_data_1 = datasets.ImageFolder(train_root_1, transform=train_transform)
-        
-        print(f"Loading train data from: {train_root_2}")
+
+        print(f"Loading augmented data from: {train_root_2}")
         train_data_2 = datasets.ImageFolder(train_root_2, transform=train_transform)
 
         if train_data_1.classes != train_data_2.classes:
