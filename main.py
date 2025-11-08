@@ -510,6 +510,7 @@ def validate(val_loader, model, log, fgsm=False, eps=4, rand_init=False, mean=No
 
 
 best_acc = 0
+best_acc5 = 0
 
 
 def main():
@@ -530,6 +531,7 @@ def main():
         log = None
 
     global best_acc
+    global best_acc5
 
     state = {k: v for k, v in args._get_kwargs()}
     print("")
@@ -691,6 +693,9 @@ def main():
             is_best = True
             best_acc = val_acc
 
+        if val_acc5 > best_acc5:
+            best_acc5 = val_acc5
+
         # measure elapsed time
         epoch_time.update(time.time() - start_time)
         start_time = time.time()
@@ -706,7 +711,7 @@ def main():
                 'state_dict': net.state_dict(),
                 'recorder': recorder,
                 'optimizer': optimizer.state_dict(),
-            }, is_best, exp_dir, 'checkpoint.pth.tar')
+            }, is_best, exp_dir, 'checkpoint.pth.tar', model_save_name)
 
         dummy = recorder.update(epoch, tr_los, tr_acc, val_los, val_acc)
         # if (epoch + 1) % 100 == 0:
@@ -729,7 +734,9 @@ def main():
                 f'{args.dataset}/val/loss': val_los,
                 f'{args.dataset}/val/acc': val_acc,
                 f'{args.dataset}/val/acc5': val_acc5,
-                f'{args.dataset}learning_rate': current_learning_rate
+                f'{args.dataset}/best_acc': best_acc,
+                f'{args.dataset}/best_acc5': best_acc5,
+                'learning_rate': current_learning_rate
             }, step=epoch)
 
     acc_var = np.maximum(

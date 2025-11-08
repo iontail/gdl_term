@@ -17,3 +17,6 @@ figures/.DS_Store
 imagenet/checkpoint/*
 output
 checkpoint
+datasets
+*arch*
+experiments
