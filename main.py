@@ -430,7 +430,7 @@ def train(train_loader, model, optimizer, epoch, args, log, mp=None, fractal_img
 
         elif args.train == 'fractal_mixup':
             input_var, target_var = Variable(input), Variable(target)
-            output, target_reweighted = model(input_var, target_var, fractal_img=fractal_imgs, alpha=args.fractal_alpha, active_lam=args.active_lam)
+            output, target_reweighted = model(input_var, target_var, fractal_img=fractal_imgs, fractal_alpha=args.fractal_alpha, active_lam=args.active_lam)
             loss = bce_loss(softmax(output), target_reweighted)
 
         else:

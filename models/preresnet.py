@@ -125,7 +125,7 @@ class PreActResNet(nn.Module):
                 adv_mask2=0,
                 mp=None,
                 fractal_img=None,
-                alpha=0.2,
+                fractal_alpha=0.2,
                 active_lam=False):
 
         if mixup_hidden:
@@ -154,7 +154,7 @@ class PreActResNet(nn.Module):
                                      target_reweighted,
                                      args=args,
                                      fractal_img=fractal_img,
-                                     alpha=alpha,
+                                     fractal_alpha=fractal_alpha,
                                      active_lam=active_lam)
             layer_mix = 0
 
