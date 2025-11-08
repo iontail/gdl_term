@@ -4,6 +4,7 @@ from __future__ import division
 import os, sys, shutil, time, random
 from collections import OrderedDict
 
+
 sys.path.append('..')
 if sys.version_info[0] < 3:
     import cPickle as pickle
@@ -22,6 +23,7 @@ from multiprocessing import Pool
 from datetime import datetime
 
 import wandb
+import tqdm
 from torchvision import datasets, transforms
 
 model_names = sorted(
@@ -337,7 +339,7 @@ def train(train_loader, model, optimizer, epoch, args, log, mp=None, fractal_img
     model.train()
 
     end = time.time()
-    for i, (input, target) in enumerate(train_loader):
+    for input, target in tqdm(train_loader, leave=False):
         data_time.update(time.time() - end)
         optimizer.zero_grad()
 
