@@ -124,7 +124,7 @@ def mixup_process(out,
 
 
     if fractal_img is not None and active_lam:
-        target_reweighted = target_reweighted * lam
+        target_reweighted = target_reweighted * 1
     else:
         target_reweighted = target_reweighted * ratio.unsqueeze(-1) + target_shuffled_onehot * (
             1 - ratio.unsqueeze(-1))
