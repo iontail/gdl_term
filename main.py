@@ -25,6 +25,7 @@ from datetime import datetime
 import wandb
 from tqdm import tqdm
 from torchvision import datasets, transforms
+from scheduler import get_scheduler
 
 model_names = sorted(
     name for name in models.__dict__
@@ -141,7 +142,7 @@ parser.add_argument('--active_lam', action='store_true',
                     help='whether to use active lam for fractal mixup')
 
 # training
-parser.add_argument('--batch_size', type=int, default=256)
+parser.add_argument('--batch_size', type=int, default=128)
 parser.add_argument('--learning_rate', type=float, default=0.1)
 parser.add_argument('--momentum', type=float, default=0.9)
 parser.add_argument('--decay', type=float, default=0.0001, help='weight decay (L2 penalty)')
@@ -150,6 +151,12 @@ parser.add_argument('--schedule',
                     nargs='+',
                     default=[100, 200],
                     help='decrease learning rate at these epochs')
+
+parser.add_argument('--warmup_epochs', type=int, default=5)
+parser.add_argument('--warmup_start_lr', type=float, default=1e-2)
+parser.add_argument('--min_lr', type=float, default=1e-6)
+
+
 parser.add_argument(
     '--gammas',
     type=float,
@@ -326,6 +333,7 @@ softmax = nn.Softmax(dim=1).cuda()
 criterion = nn.CrossEntropyLoss().cuda()
 criterion_batch = nn.CrossEntropyLoss(reduction='none').cuda()
 
+
 def train(train_loader, model, optimizer, epoch, args, log, mp=None, fractal_imgs=None):
     '''train given model and dataloader'''
     batch_time = AverageMeter()
@@ -456,7 +464,7 @@ def train(train_loader, model, optimizer, epoch, args, log, mp=None, fractal_img
     return top1.avg, top5.avg, losses.avg
 
 
-def validate(val_loader, model, log, fgsm=False, eps=4, rand_init=False, mean=None, std=None):
+def validate(val_loader, model, optimizer, log, fgsm=False, eps=4, rand_init=False, mean=None, std=None):
     '''evaluate trained model'''
     losses = AverageMeter()
     top1 = AverageMeter()
@@ -626,6 +634,23 @@ def main():
 
     recorder = RecorderMeter(args.epochs)
 
+    
+    optimizer = torch.optim.SGD(net.parameters(),
+                        lr = args.learning_rate,
+                        momentum=0.9,
+                        weight_decay=args.decay
+                        )
+
+    scheduler = get_scheduler(
+        optimizer=optimizer,
+        scheduler_name='step',
+        warmup_epochs=state['warmup_epochs'],
+        warmup_start_lr=state['warmup_start_lr'],
+        total_epochs=state['epochs'],
+        min_lr=state['min_lr'],
+        milestones=[100, 200]
+        )
+
     # optionally resume from a checkpoint
     if args.resume:
         if os.path.isfile(args.resume):
@@ -645,7 +670,7 @@ def main():
         print_log("=> do not use any checkpoint for {} model".format(args.arch), log)
 
     if args.evaluate:
-        validate(test_loader, net, criterion, log)
+        validate(test_loader, net, optimizer, criterion, log)
         return
 
     if args.mp > 0:
@@ -663,7 +688,8 @@ def main():
     test_acct5 = []
 
     for epoch in range(args.start_epoch, args.epochs):
-        current_learning_rate = adjust_learning_rate(optimizer, epoch, args.gammas, args.schedule)
+        current_learning_rate = optimizer.param_groups[0]['lr']
+
         if epoch == args.schedule[0]:
             args.clean_lam == 0
 
@@ -675,11 +701,15 @@ def main():
         # train for one epoch
         tr_acc, tr_acc5, tr_los = train(train_loader, net, optimizer, epoch, args, log, mp=mp, fractal_imgs=fractal_imgs)
 
+
+
         # evaluate on validation set
-        val_acc, val_acc5, val_los = validate(test_loader, net, log)
+        val_acc, val_acc5, val_los = validate(test_loader, net, optimizer, log)
         if (epoch % 50) == 0 and args.adv_p > 0:
-            _, _ = validate(test_loader, net, log, fgsm=True, eps=4, mean=args.mean, std=args.std)
-            _, _ = validate(test_loader, net, log, fgsm=True, eps=8, mean=args.mean, std=args.std)
+            _, _ = validate(test_loader, net, optimizer, log, fgsm=True, eps=4, mean=args.mean, std=args.std)
+            _, _ = validate(test_loader, net, optimizer, log, fgsm=True, eps=8, mean=args.mean, std=args.std)
+
+        scheduler.step()
 
         train_loss.append(tr_los)
         train_acc.append(tr_acc)
@@ -703,6 +733,7 @@ def main():
         if args.log_off:
             continue
 
+        
         # save log
         save_checkpoint(
             {
@@ -726,6 +757,7 @@ def main():
         pickle.dump(train_log, open(os.path.join(exp_dir, 'log.pkl'), 'wb'))
         # plotting(exp_dir)
 
+        
         if args.use_wandb:
             wandb.log({
                 f'{args.dataset}/train/loss': tr_los,
