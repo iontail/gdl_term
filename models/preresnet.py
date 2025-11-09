@@ -132,6 +132,9 @@ class PreActResNet(nn.Module):
             layer_mix = random.randint(0, 2)
         elif mixup:
             layer_mix = 0
+
+        elif fractal_img is not None:
+            layer_mix = 0
         else:
             layer_mix = None
 
@@ -141,22 +144,24 @@ class PreActResNet(nn.Module):
             target_reweighted = to_one_hot(target, self.num_classes)
 
         if layer_mix == 0:
-            out, target_reweighted = mixup_process(out,
-                                                   target_reweighted,
-                                                   args=args,
-                                                   grad=grad,
-                                                   noise=noise,
-                                                   adv_mask1=adv_mask1,
-                                                   adv_mask2=adv_mask2,
-                                                   mp=mp)
-        if fractal_img is not None:
-            out, target_reweighted = mixup_process(out,
-                                     target_reweighted,
-                                     args=args,
-                                     fractal_img=fractal_img,
-                                     fractal_alpha=fractal_alpha,
-                                     active_lam=active_lam)
-            layer_mix = 0
+            if fractal_img is not None:
+                out, target_reweighted = mixup_process(out,
+                                        target_reweighted,
+                                        args=args,
+                                        fractal_img=fractal_img,
+                                        fractal_alpha=fractal_alpha,
+                                        active_lam=active_lam)
+
+            else:
+                out, target_reweighted = mixup_process(out,
+                                                    target_reweighted,
+                                                    args=args,
+                                                    grad=grad,
+                                                    noise=noise,
+                                                    adv_mask1=adv_mask1,
+                                                    adv_mask2=adv_mask2,
+                                                    mp=mp)
+        
 
         out = self.conv1(out)
         out = self.layer1(out)
