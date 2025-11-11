@@ -126,7 +126,8 @@ class PreActResNet(nn.Module):
                 mp=None,
                 fractal_batch=None,
                 fractal_alpha=0.2,
-                active_lam=False):
+                active_lam=False,
+                retain_lam=retain_lam):
 
         if mixup_hidden:
             layer_mix = random.randint(0, 2)
@@ -149,7 +150,9 @@ class PreActResNet(nn.Module):
                                         args=args,
                                         fractal_batch=fractal_batch,
                                         fractal_alpha=fractal_alpha,
-                                        active_lam=active_lam)
+                                        active_lam=active_lam,
+                                        retain_lam=retain_lam
+                                        )
 
             else:
                 out, target_reweighted = mixup_process(out,

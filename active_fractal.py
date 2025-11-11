@@ -5,7 +5,7 @@ def mix_fractal(x, fractal_batch, alpha: float = 0.2, active_lam: bool = False, 
     B, C, H, W = x.shape
     device, dtype = x.device, x.dtype
 
-    overlay = fractal_batch
+    overlay = fractal_batch     
 
     if active_lam:
         lam = torch.empty((B, 1), device=device, dtype=dtype).uniform_(0.20, 0.30)
