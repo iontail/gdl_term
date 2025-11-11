@@ -8,7 +8,7 @@ def mix_fractal(x, fractal_batch, alpha: float = 0.2, active_lam: bool = False, 
     overlay = fractal_batch
 
     if active_lam:
-        lam = torch.empty((B, 1), device=device, dtype=dtype).uniform_(0.15, 0.25)
+        lam = torch.empty((B, 1), device=device, dtype=dtype).uniform_(0.20, 0.30)
     elif not retain_lam:
         lam = torch.full((B, 1), alpha, device=device, dtype=dtype)
     else:
