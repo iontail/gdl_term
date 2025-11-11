@@ -3,7 +3,6 @@ import torch.nn.functional as F
 
 def mix_fractal(x, fractal_batch, alpha: float = 0.2, active_lam: bool = False):
     B, C, H, W = x.shape
-    N = len(fractal_img)
     device, dtype = x.device, x.dtype
 
     overlay = fractal_batch

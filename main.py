@@ -144,6 +144,7 @@ parser.add_argument('--active_lam', action='store_true',
 # training
 parser.add_argument('--batch_size', type=int, default=128)
 parser.add_argument('--learning_rate', type=float, default=0.1)
+parser.add_argument('--optimizer', type=str, default='sgd', choices=['sgd', 'adam', 'adamw'])
 parser.add_argument('--momentum', type=float, default=0.9)
 parser.add_argument('--decay', type=float, default=0.0001, help='weight decay (L2 penalty)')
 parser.add_argument('--schedule',
@@ -621,7 +622,7 @@ def main():
             config={
                 'model': args.arch,
                 'data': args.dataset,
-                'optimizer': "SGD",
+                'optimizer': args.optimizer,
                 'scheduler': "MultiStepLR",
                 'batch_size': args.batch_size,
                 'lr': args.learning_rate,
@@ -638,11 +639,21 @@ def main():
     args.num_classes = num_classes
 
     net = torch.nn.DataParallel(net, device_ids=list(range(args.ngpu)))
-    optimizer = torch.optim.SGD(net.parameters(),
-                                state['learning_rate'],
-                                momentum=state['momentum'],
-                                weight_decay=state['decay'],
-                                nesterov=True)
+
+    if args.optimizer == 'sgd':
+        optimizer = torch.optim.SGD(net.parameters(),
+                                    state['learning_rate'],
+                                    momentum=state['momentum'],
+                                    weight_decay=state['decay'],
+                                    nesterov=True)
+    elif args.optimizer == 'adam':
+        optimizer = torch.optim.Adam(net.parameters(),
+                                    lr=state['learning_rate'],
+                                    weight_decay=state['decay'])
+    elif args.optimizer == 'adamw':
+        optimizer = torch.optim.AdamW(net.parameters(),
+                                    lr=state['learning_rate'],
+                                    weight_decay=state['decay'])
 
     recorder = RecorderMeter(args.epochs)
 
