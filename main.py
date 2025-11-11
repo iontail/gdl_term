@@ -140,7 +140,7 @@ parser.add_argument('--mp', type=int, default=8, help='multi-process for graphcu
 parser.add_argument('--fractal_alpha', type=float, default=0.2, help='fractal mixup alpha')
 parser.add_argument('--active_lam', action='store_true',
                     help='whether to use active lam for fractal mixup')
-parser.add_argument('--retrain_lam', action='store_true',
+parser.add_argument('--retain_lam', action='store_true',
                     help='whether retaining target as 1')
 
 # training

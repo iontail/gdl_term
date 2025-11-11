@@ -127,7 +127,7 @@ class PreActResNet(nn.Module):
                 fractal_batch=None,
                 fractal_alpha=0.2,
                 active_lam=False,
-                retain_lam=retain_lam):
+                retain_lam=False):
 
         if mixup_hidden:
             layer_mix = random.randint(0, 2)

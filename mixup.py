@@ -54,6 +54,7 @@ def mixup_process(out,
                   fractal_batch=None,
                   fractal_alpha: float = 0.2,
                   active_lam:bool = None,
+                  retain_lam:bool = False
                   ):
     '''various mixup process'''
     if args is not None:
@@ -80,7 +81,7 @@ def mixup_process(out,
     if fractal_batch is not None:
         # Fractal Mixup
         #fractal_img = torchvision.datasets.ImageFolder
-        out, lam = mix_fractal(out, fractal_batch=fractal_batch, alpha=fractal_alpha, active_lam=active_lam)
+        out, lam = mix_fractal(out, fractal_batch=fractal_batch, alpha=fractal_alpha, active_lam=active_lam, retain_lam=retain_lam)
         ratio = lam.squeeze()
     elif hidden:
         # Manifold Mixup
