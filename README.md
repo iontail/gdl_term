@@ -34,12 +34,16 @@
     cd datasets
     mkdir concat
     mkdir fractal
+    mkdir blended
     
     gdown 1TsXi6THJSpcXKna3fkgZwNTJFEXA8ehZ
     unzip concatenated.zip
 
     gdown 1LDh58LuQ9HkAjTliVv7tzCmgVZ9zOrCS 
     unzip fractal.zip
+
+    gdown 
+    unzip blended.zip
 
     ```
 
