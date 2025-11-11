@@ -124,7 +124,7 @@ class PreActResNet(nn.Module):
                 adv_mask1=0,
                 adv_mask2=0,
                 mp=None,
-                fractal_img=None,
+                fractal_batch=None,
                 fractal_alpha=0.2,
                 active_lam=False):
 
@@ -132,8 +132,7 @@ class PreActResNet(nn.Module):
             layer_mix = random.randint(0, 2)
         elif mixup:
             layer_mix = 0
-
-        elif fractal_img is not None:
+        elif fractal_batch is not None:
             layer_mix = 0
         else:
             layer_mix = None
@@ -144,11 +143,11 @@ class PreActResNet(nn.Module):
             target_reweighted = to_one_hot(target, self.num_classes)
 
         if layer_mix == 0:
-            if fractal_img is not None:
+            if fractal_batch is not None:
                 out, target_reweighted = mixup_process(out,
                                         target_reweighted,
                                         args=args,
-                                        fractal_img=fractal_img,
+                                        fractal_batch=fractal_batch,
                                         fractal_alpha=fractal_alpha,
                                         active_lam=active_lam)
 

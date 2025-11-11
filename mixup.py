@@ -51,7 +51,7 @@ def mixup_process(out,
                   adv_mask1=0,
                   adv_mask2=0,
                   mp=None,
-                  fractal_img=None,
+                  fractal_batch=None,
                   fractal_alpha: float = 0.2,
                   active_lam:bool = None,
                   ):
@@ -77,7 +77,7 @@ def mixup_process(out,
 
     lam = get_lambda(mixup_alpha)
 
-    if fractal_img is not None:
+    if fractal_batch is not None:
         # Fractal Mixup
         #fractal_img = torchvision.datasets.ImageFolder
         out, lam = mix_fractal(out, fractal_img=fractal_img, alpha=fractal_alpha, active_lam=active_lam)

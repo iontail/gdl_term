@@ -334,7 +334,7 @@ criterion = nn.CrossEntropyLoss().cuda()
 criterion_batch = nn.CrossEntropyLoss(reduction='none').cuda()
 
 
-def train(train_loader, model, optimizer, epoch, args, log, mp=None, fractal_imgs=None):
+def train(train_loader, model, optimizer, epoch, args, log, mp=None):
     '''train given model and dataloader'''
     batch_time = AverageMeter()
     data_time = AverageMeter()
@@ -347,11 +347,12 @@ def train(train_loader, model, optimizer, epoch, args, log, mp=None, fractal_img
     model.train()
 
     end = time.time()
-    for input, target in tqdm(train_loader, leave=False):
+    for input, fractal_batch, target in tqdm(train_loader, leave=False):
         data_time.update(time.time() - end)
         optimizer.zero_grad()
 
         input = input.cuda()
+        fractal_batch = fractal_batch.cuda()
         target = target.long().cuda()
 
         unary = None
@@ -438,7 +439,7 @@ def train(train_loader, model, optimizer, epoch, args, log, mp=None, fractal_img
 
         elif args.train == 'fractal_mixup':
             input_var, target_var = Variable(input), Variable(target)
-            output, target_reweighted = model(input_var, target_var, args=args, fractal_img=fractal_imgs, fractal_alpha=args.fractal_alpha, active_lam=args.active_lam)
+            output, target_reweighted = model(input_var, target_var, args=args, fractal_img=fractal_batch, fractal_alpha=args.fractal_alpha, active_lam=args.active_lam)
             loss = bce_loss(softmax(output), target_reweighted)
 
         else:
@@ -550,18 +551,8 @@ def main():
     print_log("torch  version : {}".format(torch.__version__), log)
     print_log("cudnn  version : {}".format(torch.backends.cudnn.version()), log)
 
-    # dataloader
-    train_loader, valid_loader, _, test_loader, num_classes = load_data_subset(
-        args.batch_size,
-        2,
-        args.dataset,
-        args.train_org_dir,
-        args.train_aug_dir,
-        args.test_dir,
-        labels_per_class=args.labels_per_class,
-        valid_labels_per_class=args.valid_labels_per_class,
-        mixup_alpha=args.mixup_alpha)
-    
+
+
     if args.dataset in ['cifar10', 'cifar100']:
         fractal_transforms = transforms.Compose([
             transforms.Resize((32, 32)),
@@ -573,8 +564,29 @@ def main():
             transforms.ToTensor(),
         ])
 
-    fractal_imgs = datasets.ImageFolder(root=args.fractal_img_dir, transform=fractal_transforms)
+    fractal_dataset_obj = None
+    if args.train == 'fractal_mixup':
+        #
+        fractal_dataset_obj = datasets.ImageFolder(root=args.fractal_img_dir, transform=fractal_transforms)
+        print_log(f"Loaded {len(fractal_dataset_obj)} fractal images for mixup.", log)
 
+
+    # dataloader
+    train_loader, valid_loader, _, test_loader, num_classes = load_data_subset(
+        args.batch_size,
+        2,
+        args.dataset,
+        args.train_org_dir,
+        args.train_aug_dir,
+        args.test_dir,
+        labels_per_class=args.labels_per_class,
+        valid_labels_per_class=args.valid_labels_per_class,
+        mixup_alpha=args.mixup_alpha,
+        train_mode=args.train,
+        fractal_dataset=fractal_dataset_obj
+        )
+    
+    
 
     if args.dataset == 'tiny-imagenet-200':
         stride = 2
@@ -699,7 +711,7 @@ def main():
                 + ' [Best : Accuracy={:.2f}, Error={:.2f}]'.format(recorder.max_accuracy(False), 100-recorder.max_accuracy(False)), log)
 
         # train for one epoch
-        tr_acc, tr_acc5, tr_los = train(train_loader, net, optimizer, epoch, args, log, mp=mp, fractal_imgs=fractal_imgs)
+        tr_acc, tr_acc5, tr_los = train(train_loader, net, optimizer, epoch, args, log, mp=mp)
 
 
 

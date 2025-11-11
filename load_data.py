@@ -6,6 +6,32 @@ import numpy as np
 from functools import reduce
 from operator import __or__
 
+import random
+from torch.utils.data import Dataset
+
+
+class FractalMixDataset(Dataset):
+    def __init__(self, main_dataset, fractal_dataset):
+        self.main_dataset = main_dataset
+        self.fractal_dataset = fractal_dataset
+        self.fractal_len = len(self.fractal_dataset)
+        
+        # SubsetRandomSampler가 작동하려면 'targets'와 'classes' 속성이 필요합니다.
+        if hasattr(main_dataset, 'targets'):
+            self.targets = main_dataset.targets
+        if hasattr(main_dataset, 'classes'):
+            self.classes = main_dataset.classes
+
+    def __len__(self):
+        return len(self.main_dataset)
+
+    def __getitem__(self, idx):
+        main_img, main_label = self.main_dataset[idx]
+
+        fractal_idx = random.randint(0, self.fractal_len - 1)
+        fractal_img, _ = self.fractal_dataset[fractal_idx]
+        return main_img, fractal_img, main_label
+
 
 def load_data_subset(batch_size,
                      workers,
@@ -15,7 +41,10 @@ def load_data_subset(batch_size,
                      data_test_dir,
                      labels_per_class=100,
                      valid_labels_per_class=500,
-                     mixup_alpha=1):
+                     mixup_alpha=1,
+                     train_mode='vanilla',
+                     fractal_dataset=None
+                     ):
     '''return datalaoder'''
     ## copied from GibbsNet_pytorch/load.py
     if dataset == 'cifar10':
@@ -120,6 +149,14 @@ def load_data_subset(batch_size,
 
     else:
         assert False, 'Do not support dataset : {}'.format(dataset)
+
+
+    # new code
+    if train_mode == 'fractal_mixup':
+        if fractal_dataset is None:
+            raise ValueError("Fractal_dataset must be provided when train_mode is 'fractal_mixup'")
+        print(f"Wrapping main dataset with {len(fractal_dataset)} fractal images.")
+        train_data = FractalMixDataset(main_dataset=train_data, fractal_dataset=fractal_dataset)
 
     n_labels = num_classes
 

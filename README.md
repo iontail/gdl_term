@@ -34,8 +34,6 @@
     cd datasets
     mkdir concat
     mkdir fractal
-
-    gdown --folder https://drive.google.com/drive/folders/1o5iww1y4xWksbCpItkl1U4-DQ7ri4uDQ?usp=drive_link
     
     gdown 1TsXi6THJSpcXKna3fkgZwNTJFEXA8ehZ
     unzip concatenated.zip
