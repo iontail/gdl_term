@@ -62,7 +62,7 @@ parser.add_argument('--fractal_img_dir',
 
 parser.add_argument('--train_aug_dir',
                     type=str,
-                    default='diffusemix',
+                    default='None',
                     help='file where results are to be written')
 
 parser.add_argument('--test_dir',
@@ -581,6 +581,7 @@ def main():
 
 
     # dataloader
+    print(args.train_aug_dir)
     train_loader, valid_loader, _, test_loader, num_classes = load_data_subset(
         args.batch_size,
         2,
@@ -753,6 +754,7 @@ def main():
         if val_acc > best_acc:
             is_best = True
             best_acc = val_acc
+            print("New best accuracy : {:.2f}".format(best_acc))
 
         if val_acc5 > best_acc5:
             best_acc5 = val_acc5

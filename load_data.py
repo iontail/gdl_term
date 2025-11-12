@@ -37,8 +37,8 @@ def load_data_subset(batch_size,
                      workers,
                      dataset,
                      data_train_org_dir,
-                     data_train_aug_dir,
-                     data_test_dir,
+                     data_train_aug_dir=None,
+                     data_test_dir=None,
                      labels_per_class=100,
                      valid_labels_per_class=500,
                      mixup_alpha=1,
@@ -115,34 +115,41 @@ def load_data_subset(batch_size,
         
         # num_classes = len(train_data.classes) # 100
         # print(f"Found {num_classes} classes in {train_root}")
-        from torch.utils.data import ConcatDataset
-        
-        train_root_1 = data_train_org_dir
-        train_root_2 = data_train_aug_dir
-        test_root = data_test_dir 
 
-        if not os.path.exists(train_root_1) or not os.path.exists(train_root_2):
-            raise FileNotFoundError(f"One of the train directories not found. Check paths.")
-        if not os.path.exists(test_root):
-            raise FileNotFoundError(f"Test directory not found: {test_root}")
+        if not os.path.exists(data_test_dir):
+                raise FileNotFoundError(f"Test directory not found: {data_test_dir}")
 
-        print(f"Loading train data from: {train_root_1}")
-        train_data_1 = datasets.ImageFolder(train_root_1, transform=train_transform)
-
-        print(f"Loading augmented data from: {train_root_2}")
-        train_data_2 = datasets.ImageFolder(train_root_2, transform=train_transform)
-
-        if train_data_1.classes != train_data_2.classes:
-            raise ValueError("Class list/order mismatch between the two train directories. "
-                             "This will cause incorrect labels.")
+        if data_train_aug_dir == 'None':
+            train_data = datasets.ImageFolder(data_train_org_dir, transform=train_transform)
+            print(f"Loading train data from: {data_train_org_dir}")
+        else:
+            from torch.utils.data import ConcatDataset
             
-        train_data = ConcatDataset([train_data_1, train_data_2])
-        print(f"Combined two train datasets. Total size: {len(train_data)}")
+            train_root_1 = data_train_org_dir
+            train_root_2 = data_train_aug_dir
+            test_root = data_test_dir 
 
-        train_data.targets = np.concatenate([train_data_1.targets, train_data_2.targets])
-        train_data.classes = train_data_1.classes  
-        
-        test_data = datasets.ImageFolder(test_root, transform=test_transform)
+            if not os.path.exists(train_root_1) or not os.path.exists(train_root_2):
+                raise FileNotFoundError(f"One of the train directories not found. Check paths.")
+            
+
+            print(f"Loading train data from: {train_root_1}")
+            train_data_1 = datasets.ImageFolder(train_root_1, transform=train_transform)
+
+            print(f"Loading augmented data from: {train_root_2}")
+            train_data_2 = datasets.ImageFolder(train_root_2, transform=train_transform)
+
+            if train_data_1.classes != train_data_2.classes:
+                raise ValueError("Class list/order mismatch between the two train directories. "
+                                "This will cause incorrect labels.")
+                
+            train_data = ConcatDataset([train_data_1, train_data_2])
+            print(f"Combined two train datasets. Total size: {len(train_data)}")
+
+            train_data.targets = np.concatenate([train_data_1.targets, train_data_2.targets])
+            train_data.classes = train_data_1.classes
+
+        test_data = datasets.ImageFolder(data_test_dir, transform=test_transform)
         
         num_classes = len(train_data.classes)
         print(f"Found {num_classes} classes total.")
