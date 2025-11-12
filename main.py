@@ -350,12 +350,18 @@ def train(train_loader, model, optimizer, epoch, args, log, mp=None):
     model.train()
 
     end = time.time()
-    for input, fractal_batch, target in tqdm(train_loader, leave=False):
+    for data, target in tqdm(train_loader, leave=False):
+        if args.train == 'fractal_mixup':
+            input, fractal_batch = data
+            fractal_batch = fractal_batch.cuda()
+        else:
+            input = data
+            fractal_batch = None
+
         data_time.update(time.time() - end)
         optimizer.zero_grad()
 
         input = input.cuda()
-        fractal_batch = fractal_batch.cuda()
         target = target.long().cuda()
 
         unary = None
