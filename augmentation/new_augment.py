@@ -7,6 +7,7 @@ from PIL import Image
 from torchvision import datasets, transforms
 from torch.utils.data import Dataset
 from torch.utils.data.sampler import SubsetRandomSampler
+from tqdm import tqdm
 from functools import reduce
 from operator import __or__
 
@@ -59,9 +60,10 @@ class Mixer(Dataset):
         else:
             self.augmented_dataset = None
 
-    def generate_augmented_imgs(self, base_directory='./datasets'):
+    def generate_augmented_imgs(self, base_directory='./datasets', train_datadir='cifar100/train'):
         augmented_data = []
 
+        train_data_dir = os.path.join(base_directory, train_datadir)
         original_dir = os.path.join(base_directory, 'original')
         generated_dir = os.path.join(base_directory, 'generated')
         fractal_dir = os.path.join(base_directory, 'fractal')
@@ -73,9 +75,10 @@ class Mixer(Dataset):
         os.makedirs(generated_dir, exist_ok=True)
         os.makedirs(fractal_dir, exist_ok=True)
 
-        original_dataset = self.utils.load_img(original_dir, self.img_size)
+
+        original_dataset = self.utils.load_img(train_data_dir, self.img_size)
         generated_dataset = self.utils.load_img(generated_dir, self.img_size)
-        fractal_dataset = self.utils.load_img(fractal_dir, self.img_size)
+        fractal_dataset = self.utils.load_img_list(fractal_dir, self.img_size)
 
         self.idx_to_class = {v: k for k, v in original_dataset.class_to_idx.items()}
 
@@ -93,17 +96,10 @@ class Mixer(Dataset):
 
             key = (gen_label, orig_stem)
             gen_index[key] = gen_path # only one generated image per original (we use random one prompt per one original data sample)
-        
-
-        label_dirs = {dtype: os.path.join(base_directory, dtype, str(label)) for dtype in
-                      ['original', 'generated', 'combined', 'mixed']}
-
-        for dir_path in label_dirs.values():
-            os.makedirs(dir_path, exist_ok=True)
 
 
         match_fails = 0
-        for idx, (img_path, label_idx) in enumerate(original_dataset.samples):
+        for idx, (img_path, label_idx) in tqdm(enumerate(original_dataset.samples), leave=False):
             label = self.idx_to_class[label_idx]  # Use folder name as label
 
             label_dirs = {dtype: os.path.join(base_directory, dtype, str(label)) for dtype in 
@@ -312,8 +308,7 @@ class Mixer(Dataset):
             img, label_idx = self.augmented_dataset[idx]
             return img, label_idx
         else:
-            img, label_idx = self.augmented_datalist[idx]
-            return img, label_idx
+            raise ValueError("self.augmented_dataset is None. Cannot get item.")
         
 
 

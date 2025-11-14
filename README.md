@@ -40,8 +40,9 @@
     gdown 1TsXi6THJSpcXKna3fkgZwNTJFEXA8ehZ
     unzip concatenated.zip
 
-    gdown 1LDh58LuQ9HkAjTliVv7tzCmgVZ9zOrCS 
-    unzip fractal.zip
+    #gdown 1LDh58LuQ9HkAjTliVv7tzCmgVZ9zOrCS 
+    gdown 1c7HVPiF9L0dAV3bG5Y20fDiQPrvHzhj1
+    unzip deviantart.zip
 
     gdown 1oxPibnC2OiFRC_TjccH-dmPWw2RNp12v
     unzip blended.zip

@@ -3,13 +3,13 @@ import random
 import numpy as np
 from PIL import Image
 from torchvision import datasets, transforms
-from ..active_fractal import mix_fractal
+from active_fractal import mix_fractal
 
 class Utils:
     @staticmethod
     def load_img(dir_path, img_size):
-        fractal_dataset = datasets.ImageFolder(dir_path, transform=transforms.Compose([transforms.Resize((img_size, img_size))]))
-        return fractal_dataset
+        dataset = datasets.ImageFolder(dir_path, transform=transforms.Compose([transforms.Resize((img_size, img_size))]))
+        return dataset
     
     @staticmethod
     def load_img_list(dir_path, img_size):
