@@ -12,32 +12,83 @@ class Utils:
 
 
     @staticmethod
-    def make_mask(original_img, augmented_img, ratio: float=0.5, blend_width=20, ):
+    def make_mask(original_img, ratio: float = 0.5):
         """
-        Make mask for random mask with some ratio compared to the original image size
+        Random several rectangular mask
+        sum of makses ~~ ratio * (W * H)
+
         Args:
-            ratio (float): 0.5 means make mask with total size is half of that of original size
-        Returs:
-            mask
+            original_img (PIL.Image): input image
+            ratio (float): ratio of patch area w.r.t original image area
+
+        Returns:
+            mask (np.ndarray): shape (H, W, 3), {0.0, 1.0}
         """
-        #TODO: Implement Random Mask for given ratio
         width, height = original_img.size
-        combine_choice = random.choice(['horizontal', 'vertical'])
+        total_area = width * height
+        
+        ratio = max(0.0, min(1.0, ratio))
 
-        if combine_choice == 'vertical':  # Vertical combination
-            mask = np.linspace(0, 1, blend_width).reshape(-1, 1)
-            mask = np.tile(mask, (1, width))  # Extend mask horizontally
-            mask = np.vstack([np.zeros((height // 2 - blend_width // 2, width)), mask,
-                              np.ones((height // 2 - blend_width // 2 + blend_width % 2, width))])
-            mask = np.tile(mask[:, :, np.newaxis], (1, 1, 3))
+        if ratio == 0.0:
+            return np.zeros((height, width, 3), dtype=np.float32)
+        if ratio == 1.0:
+            return np.ones((height, width, 3), dtype=np.float32)
 
-        else:
-            mask = np.linspace(0, 1, blend_width).reshape(1, -1)
-            mask = np.tile(mask, (height, 1))  # Extend mask vertically
-            mask = np.hstack([np.zeros((height, width // 2 - blend_width // 2)), mask,
-                              np.ones((height, width // 2 - blend_width // 2 + blend_width % 2))])
-            mask = np.tile(mask[:, :, np.newaxis], (1, 1, 3))
+        target_area = int(total_area * ratio)
 
+        # set K(the patch number)
+        # bigger K, more # of patches
+        min_patches = 1
+        max_patches = max(1, int(1 + 9 * ratio))  # ratio=0.1 -> ~1, 0.5 -> ~5, 1.0 -> ~10
+        K = random.randint(min_patches, max_patches)
+
+        # assign each patch area
+        weights = np.random.dirichlet(np.ones(K))
+        patch_areas = np.round(weights * target_area).astype(int)
+        diff = target_area - int(patch_areas.sum())
+        patch_areas[-1] += diff 
+
+        mask = np.zeros((height, width), dtype=np.float32)
+
+        for area_i in patch_areas:
+            if area_i <= 0:
+                continue
+
+            # preventing too much small or big patch
+            min_patch_area = max(1, int(0.05 * total_area))  # at least 5%
+            max_patch_area = int(0.5 * target_area)       
+            area_i = int(np.clip(area_i, min_patch_area, max_patch_area))
+
+            placed = False
+            attempts = 0
+            max_attempts = 50
+
+            while not placed and attempts < max_attempts:
+                attempts += 1
+                aspect = np.random.uniform(0.5, 2.0)
+
+                h = int(np.sqrt(area_i / aspect))
+                w = int(aspect * h)
+
+                h = max(1, min(h, height))
+                w = max(1, min(w, width))
+
+                if width == w:
+                    x1 = 0
+                else:
+                    x1 = random.randint(0, width - w)
+                if height == h:
+                    y1 = 0
+                else:
+                    y1 = random.randint(0, height - h)
+
+                # 이미 1로 채워진 부분과 안 겹치도록
+                if np.all(mask[y1:y1 + h, x1:x1 + w] == 0):
+                    mask[y1:y1 + h, x1:x1 + w] = 1.0
+                    placed = True
+
+        # (H, W) → (H, W, 3)
+        mask = np.repeat(mask[:, :, None], 3, axis=2).astype(np.float32)
         return mask
 
     @staticmethod
