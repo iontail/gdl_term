@@ -1,8 +1,39 @@
 import os
-from torch.utils.data import Dataset
-from PIL import Image
 import random
+import torch
+import numpy as np
+
+from PIL import Image
+from torchvision import datasets, transforms
+from torch.utils.data import Dataset
+from torch.utils.data.sampler import SubsetRandomSampler
+from functools import reduce
+from operator import __or__
+
 from .aug_utils import Utils
+
+
+class FractalMixDataset(Dataset):
+    def __init__(self, main_dataset, fractal_dataset):
+        self.main_dataset = main_dataset
+        self.fractal_dataset = fractal_dataset
+        self.fractal_len = len(self.fractal_dataset)
+        
+        # 'targets' and 'classes' attributes are needed to apply SubsetRandomSampler
+        if hasattr(main_dataset, 'targets'):
+            self.targets = main_dataset.targets
+        if hasattr(main_dataset, 'classes'):
+            self.classes = main_dataset.classes
+
+    def __len__(self):
+        return len(self.main_dataset)
+
+    def __getitem__(self, idx):
+        main_img, main_label = self.main_dataset[idx]
+
+        fractal_idx = random.randint(0, self.fractal_len - 1)
+        fractal_img, _ = self.fractal_dataset[fractal_idx]
+        return main_img, fractal_img, main_label
 
 
 class Mixer(Dataset):
@@ -28,10 +59,9 @@ class Mixer(Dataset):
         else:
             self.augmented_dataset = None
 
-    def generate_augmented_imgs(self):
+    def generate_augmented_imgs(self, base_directory='./datasets'):
         augmented_data = []
 
-        base_directory = './datasets'
         original_dir = os.path.join(base_directory, 'original')
         generated_dir = os.path.join(base_directory, 'generated')
         fractal_dir = os.path.join(base_directory, 'fractal')
@@ -111,7 +141,6 @@ class Mixer(Dataset):
             mixed_img.save(os.path.join(label_dirs['mixed'], f"{origin_stem}_mixed.jpg"))
             augmented_data.append((mixed_img, label_idx))
 
-        self.augmented_datalist = augmented_data
         print(f"Total match fails: {match_fails}")
         return augmented_data
 
@@ -120,18 +149,158 @@ class Mixer(Dataset):
                       batch_size,
                       workers,
                       dataset,
-                      data_train_org_dir,
-                      data_train_aug_dir=None,
-                      data_test_dir=None,
+                      train_data_org_dir,
+                      aug_data_dir=None,
+                      test_data_dir=None,
                       labels_per_class=100,
                       valid_labels_per_class=500,
-                      mixup_alpha=1,
                       train_mode='vanilla',
                       fractal_dataset=None
                       ):
         
+        if dataset == 'cifar10':
+            mean = [x / 255 for x in [125.3, 123.0, 113.9]]
+            std = [x / 255 for x in [63.0, 62.1, 66.7]]
+        elif dataset == 'cifar100':
+            mean = [x / 255 for x in [129.3, 124.1, 112.4]]
+            std = [x / 255 for x in [68.2, 65.4, 70.4]]
+        else:
+            assert False, "Unknow dataset : {}".format(dataset)
 
-        pass
+        train_transform = transforms.Compose([
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomCrop(32, padding=2),
+            transforms.ToTensor(),
+            transforms.Normalize(mean, std)
+        ])
+
+        test_transform = transforms.Compose(
+            [transforms.ToTensor(), transforms.Normalize(mean, std)])
+
+
+        if dataset == 'cifar10':
+            train_data = datasets.CIFAR10(train_data_org_dir,
+                                        train=True,
+                                        transform=train_transform,
+                                        download=True)
+            test_data = datasets.CIFAR10(test_data_dir,
+                                        train=False,
+                                        transform=test_transform,
+                                        download=True)
+            num_classes = 10
+
+        elif dataset == 'cifar100':
+            if not os.path.exists(test_data_dir):
+                    raise FileNotFoundError(f"Test directory not found: {test_data_dir}")
+
+            if aug_data_dir == 'None':
+                train_data = datasets.ImageFolder(train_data_org_dir, transform=train_transform)
+                print(f"Loading train data from: {train_data_org_dir}")
+            else:
+                from torch.utils.data import ConcatDataset
+                
+                train_root_1 = train_data_org_dir
+                train_root_2 = aug_data_dir
+
+                if not os.path.exists(train_root_1) or not os.path.exists(train_root_2):
+                    raise FileNotFoundError(f"One of the train directories not found. Check paths.")
+                
+
+                print(f"Loading train data from: {train_root_1}")
+                train_data_1 = datasets.ImageFolder(train_root_1, transform=train_transform)
+
+                print(f"Loading augmented data from: {train_root_2}")
+                if self.augmented_dataset is not None:
+                    train_data_2 = self.augmented_dataset
+                elif aug_data_dir is not None:
+                    train_data_2 = datasets.ImageFolder(train_root_2, transform=train_transform)
+                else:
+                    raise ValueError("aug_data_dir must be provided if argument 'load' is False when initializing Mixer.")
+
+                if train_data_1.classes != train_data_2.classes:
+                    raise ValueError("Class list/order mismatch between the two train directories. "
+                                    "This will cause incorrect labels.")
+                    
+                train_data = ConcatDataset([train_data_1, train_data_2])
+                print(f"Combined two train datasets. Total size: {len(train_data)}")
+
+                train_data.targets = np.concatenate([train_data_1.targets, train_data_2.targets])
+                train_data.classes = train_data_1.classes
+
+            test_data = datasets.ImageFolder(test_data_dir, transform=test_transform)
+            
+            num_classes = len(train_data.classes)
+            print(f"Found {num_classes} classes total.")
+
+        else:
+            assert False, 'Unknown dataset : {}'.format(dataset)
+
+
+        # new code
+        if train_mode == 'fractal_mixup':
+            if fractal_dataset is None:
+                raise ValueError("Fractal_dataset must be provided when train_mode is 'fractal_mixup'")
+            print(f"Wrapping main dataset with {len(fractal_dataset)} fractal images.")
+            train_data = FractalMixDataset(main_dataset=train_data, fractal_dataset=fractal_dataset)
+
+        n_labels = num_classes
+
+        # random sampler
+        def get_sampler(labels, n=None, n_valid=None):
+            # Only choose digits in n_labels
+            # n = number of labels per class for training
+            # n_val = number of lables per class for validation
+            (indices, ) = np.where(reduce(__or__, [labels == i for i in np.arange(n_labels)]))
+            np.random.shuffle(indices)
+
+            indices_valid = np.hstack([
+                list(filter(lambda idx: labels[idx] == i, indices))[:n_valid] for i in range(n_labels)
+            ])
+            indices_train = np.hstack([
+                list(filter(lambda idx: labels[idx] == i, indices))[n_valid:n_valid + n]
+                for i in range(n_labels)
+            ])
+            indices_unlabelled = np.hstack(
+                [list(filter(lambda idx: labels[idx] == i, indices))[:] for i in range(n_labels)])
+
+            indices_train = torch.from_numpy(indices_train)
+            indices_valid = torch.from_numpy(indices_valid)
+            indices_unlabelled = torch.from_numpy(indices_unlabelled)
+            sampler_train = SubsetRandomSampler(indices_train)
+            sampler_valid = SubsetRandomSampler(indices_valid)
+            sampler_unlabelled = SubsetRandomSampler(indices_unlabelled)
+            return sampler_train, sampler_valid, sampler_unlabelled
+
+   
+        train_sampler, valid_sampler, unlabelled_sampler = get_sampler(train_data.targets, labels_per_class, valid_labels_per_class)
+
+
+        labelled = torch.utils.data.DataLoader(train_data,
+                                            batch_size=batch_size,
+                                            sampler=train_sampler,
+                                            shuffle=False,
+                                            num_workers=workers,
+                                            pin_memory=True)
+        validation = torch.utils.data.DataLoader(train_data,
+                                                batch_size=batch_size,
+                                                sampler=valid_sampler,
+                                                shuffle=False,
+                                                num_workers=workers,
+                                                pin_memory=True)
+        unlabelled = torch.utils.data.DataLoader(train_data,
+                                                batch_size=batch_size,
+                                                sampler=unlabelled_sampler,
+                                                shuffle=False,
+                                                num_workers=workers,
+                                                pin_memory=True)
+        test = torch.utils.data.DataLoader(test_data,
+                                        batch_size=batch_size,
+                                        shuffle=False,
+                                        num_workers=workers,
+                                        pin_memory=True)
+
+        return labelled, validation, unlabelled, test, num_classes
+
     
     def __len__(self):
         if self.augmented_dataset is not None:
@@ -145,3 +314,23 @@ class Mixer(Dataset):
         else:
             img, label_idx = self.augmented_datalist[idx]
             return img, label_idx
+        
+
+
+if __name__ == "__main__":
+    img_size = 32
+    ratio = 0.5
+    alpha = 0.2
+    active_lam = False
+    retain_lam = False
+
+    mixer = Mixer(img_size=img_size,
+                  load=False,
+                  ratio=ratio,
+                  alpha=alpha,
+                  active_lam=active_lam,
+                  retain_lam=retain_lam)
+    
+    mixer.generate_augmented_imgs(base_directory='./datasets')
+
+    print("Augmentation process completed.")

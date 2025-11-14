@@ -3,8 +3,6 @@ from __future__ import division
 
 import os, sys, shutil, time, random
 from collections import OrderedDict
-
-
 sys.path.append('..')
 if sys.version_info[0] < 3:
     import cPickle as pickle
@@ -15,17 +13,19 @@ import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
 import torch.nn as nn
-from torch.autograd import Variable
-from load_data import load_data_subset
-from logger import plotting, copy_script_to_folder, AverageMeter, RecorderMeter, time_string, convert_secs2time
 import models
+import wandb
+
+from tqdm import tqdm
+from torchvision import datasets, transforms
+from torch.autograd import Variable
 from multiprocessing import Pool
 from datetime import datetime
 
-import wandb
-from tqdm import tqdm
-from torchvision import datasets, transforms
 from scheduler import get_scheduler
+from load_data import load_data_subset
+from logger import plotting, copy_script_to_folder, AverageMeter, RecorderMeter, time_string, convert_secs2time
+from augmentation.new_augment import Mixer
 
 model_names = sorted(
     name for name in models.__dict__
@@ -560,6 +560,11 @@ def main():
     print_log("torch  version : {}".format(torch.__version__), log)
     print_log("cudnn  version : {}".format(torch.backends.cudnn.version()), log)
 
+    if args.datasets in ['cifar10', 'cifar100']:
+        args.img_size = 32
+
+    # mixer = Mixer(img_size=args.img_size, load=True, ratio=0.5, alpha=0.2, active_lam=False, retain_lam=False)
+    mixer = Mixer(img_size=args.img_size, load=True)
 
 
     if args.dataset in ['cifar10', 'cifar100']:
@@ -568,42 +573,32 @@ def main():
             transforms.ToTensor(),
         ])
     else:
-        fractal_transforms = transforms.Compose([
-            transforms.Resize((256, 256)),
-            transforms.ToTensor(),
-        ])
-
+        raise ValueError(f'Unsupported dataset for fractal mixup. Got {args.dataset}.')
+    
     fractal_dataset_obj = None
     if args.train == 'fractal_mixup':
-        #
         fractal_dataset_obj = datasets.ImageFolder(root=args.fractal_img_dir, transform=fractal_transforms)
         print_log(f"Loaded {len(fractal_dataset_obj)} fractal images for mixup.", log)
 
 
     # dataloader
     print(args.train_aug_dir)
-    train_loader, valid_loader, _, test_loader, num_classes = load_data_subset(
+    train_loader, valid_loader, _, test_loader, num_classes = mixer.subset_loader(
         args.batch_size,
-        2,
+        4,
         args.dataset,
         args.train_org_dir,
         args.train_aug_dir,
         args.test_dir,
         labels_per_class=args.labels_per_class,
         valid_labels_per_class=args.valid_labels_per_class,
-        mixup_alpha=args.mixup_alpha,
         train_mode=args.train,
         fractal_dataset=fractal_dataset_obj
         )
     
     
 
-    if args.dataset == 'tiny-imagenet-200':
-        stride = 2
-        args.mean = torch.tensor([0.5] * 3, dtype=torch.float32).reshape(1, 3, 1, 1).cuda()
-        args.std = torch.tensor([0.5] * 3, dtype=torch.float32).reshape(1, 3, 1, 1).cuda()
-        args.labels_per_class = 500
-    elif args.dataset == 'cifar10':
+    if args.dataset == 'cifar10':
         stride = 1
         args.mean = torch.tensor([x / 255 for x in [125.3, 123.0, 113.9]],
                                  dtype=torch.float32).reshape(1, 3, 1, 1).cuda()
@@ -618,7 +613,7 @@ def main():
                                 dtype=torch.float32).reshape(1, 3, 1, 1).cuda()
         args.labels_per_class = 500
     else:
-        raise AssertionError('Given Dataset is not supported!')
+        raise AssertionError(f'Given Dataset is not supported! Got {args.dataset}.')
     
 
     start_time = datetime.now().strftime("%m%d_%H%M")
