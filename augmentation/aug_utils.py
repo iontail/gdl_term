@@ -2,13 +2,19 @@ import os
 import random
 import numpy as np
 from PIL import Image
+from torchvision import datasets, transforms
 from ..active_fractal import mix_fractal
 
 class Utils:
     @staticmethod
-    def load_fractal_images(fractal_img_dir):
-        fractal_img_paths = [os.path.join(fractal_img_dir, fname) for fname in os.listdir(fractal_img_dir) if fname.endswith(('.png', '.jpg', '.jpeg'))]
-        return [Image.open(path).convert('RGB').resize((256, 256)) for path in fractal_img_paths]
+    def load_img(dir_path, img_size):
+        fractal_dataset = datasets.ImageFolder(dir_path, transform=transforms.Compose([transforms.Resize((img_size, img_size))]))
+        return fractal_dataset
+    
+    @staticmethod
+    def load_img_list(dir_path, img_size):
+        fractal_img_paths = [os.path.join(dir_path, fname) for fname in os.listdir(dir_path) if fname.endswith(('.png', '.jpg', '.jpeg'))]
+        return [Image.open(path).convert('RGB').resize((img_size, img_size)) for path in fractal_img_paths]
 
 
     @staticmethod
@@ -130,12 +136,12 @@ class Utils:
         combined_img = Utils.combine_img_random_mask(base_img, overlay_img, ratio)
 
         if fractal_img is not None:
-            aug_img, lam = Utils.mix_fractal(combined_img, fractal_img, alpha, active_lam, retain_lam)
+            mixed_img, lam = Utils.mix_fractal(combined_img, fractal_img, alpha, active_lam, retain_lam)
         else:
-            aug_img = combined_img
+            mixed_img = combined_img
             lam = 1
 
-        return aug_img, lam
+        return combined_img, mixed_img, lam
 
     @staticmethod
     def blend_images_with_resize(base_img, overlay_img, alpha=0.20):

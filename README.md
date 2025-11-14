@@ -35,6 +35,7 @@
     mkdir concat
     mkdir fractal
     mkdir blended
+    mkdir generated
     
     gdown 1TsXi6THJSpcXKna3fkgZwNTJFEXA8ehZ
     unzip concatenated.zip
@@ -44,6 +45,9 @@
 
     gdown 1oxPibnC2OiFRC_TjccH-dmPWw2RNp12v
     unzip blended.zip
+
+    gdown 1Ewb4sOfJi27VpIxBjhX_rEnPJGlQ97eG
+    uizip generated
 
     ```
 
