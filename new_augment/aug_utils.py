@@ -26,27 +26,25 @@ class Utils:
         """
         width, height = original_img.size
         total_area = width * height
-        
-        ratio = max(0.0, min(1.0, ratio))
 
-        if ratio == 0.0:
-            return np.zeros((height, width, 3), dtype=np.float32)
+        assert 0.0 <= ratio <= 1.0
+
         if ratio == 1.0:
             return np.ones((height, width, 3), dtype=np.float32)
 
         target_area = int(total_area * ratio)
 
         # set K(the patch number)
-        # bigger K, more # of patches
+        # bigger the ratio is, more possible having many patch
         min_patches = 1
-        max_patches = max(1, int(1 + 9 * ratio))  # ratio=0.1 -> ~1, 0.5 -> ~5, 1.0 -> ~10
+        max_patches = max(1, int(10 * ratio))  # max number = 10 * ratio
         K = random.randint(min_patches, max_patches)
 
         # assign each patch area
-        weights = np.random.dirichlet(np.ones(K))
+        weights = np.random.dirichlet(np.ones(K)) # setting each patch's area (sum of weight = 1)
         patch_areas = np.round(weights * target_area).astype(int)
-        diff = target_area - int(patch_areas.sum())
-        patch_areas[-1] += diff 
+        diff = target_area - int(patch_areas.sum()) # rataining area
+        patch_areas[-1] += diff # setting last patch is a part of retaining area
 
         mask = np.zeros((height, width), dtype=np.float32)
 
@@ -65,7 +63,7 @@ class Utils:
 
             while not placed and attempts < max_attempts:
                 attempts += 1
-                aspect = np.random.uniform(0.5, 2.0)
+                aspect = np.random.uniform(0.5, 2.0) # ratio between height and width
 
                 h = int(np.sqrt(area_i / aspect))
                 w = int(aspect * h)
@@ -93,7 +91,7 @@ class Utils:
 
     @staticmethod
     def combine_img_random_mask(base_img, overlay_img, ratio: float = 0.5):
-        mask = Utils.make_mask(base_img, overlay_img, ratio, blend_width=20)
+        mask = Utils.make_mask(base_img, ratio)
         original_array = np.array(base_img, dtype=np.float32) / 255.0
         augmented_array = np.array(overlay_img, dtype=np.float32) / 255.0
 
