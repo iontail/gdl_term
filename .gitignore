@@ -6,8 +6,8 @@
 */*.pyc
 !models/*
 models/*.pyc
-!new_augment/*
-new_augment/*.pyc
+!augmentation/*
+augmentation/*.pyc
 !unit_test/*
 !checkpoint/*
 saliency.py
