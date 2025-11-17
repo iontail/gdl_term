@@ -60,18 +60,16 @@ class Mixer(Dataset):
         else:
             self.augmented_dataset = None
 
-    def generate_augmented_imgs(self, base_directory='./datasets', train_datadir='cifar100/train'):
+    def generate_augmented_imgs(self, base_directory='./datasets', train_datadir='original'):
         augmented_data = []
 
         train_data_dir = os.path.join(base_directory, train_datadir)
-        original_dir = os.path.join(base_directory, 'original')
         generated_dir = os.path.join(base_directory, 'generated')
         fractal_dir = os.path.join(base_directory, 'fractal')
         
 
         # Ensure these directories exist
         os.makedirs(base_directory, exist_ok=True)
-        os.makedirs(original_dir, exist_ok=True)
         os.makedirs(generated_dir, exist_ok=True)
         os.makedirs(fractal_dir, exist_ok=True)
 
@@ -107,11 +105,13 @@ class Mixer(Dataset):
             for dir_path in label_dirs.values():
                 os.makedirs(dir_path, exist_ok=True)
 
+
             origin_file_name = os.path.basename(img_path)  # 'apple_s_000058.png'
             origin_stem, _ = os.path.splitext(origin_file_name)  # 'apple_s_000058'
 
             key = (label, origin_stem)
             gen_path = gen_index.get(key, None)
+
             if gen_path is None:
                 match_fails += 1
                 continue
@@ -122,7 +122,7 @@ class Mixer(Dataset):
 
 
             rand_idx = random.randint(0, len(fractal_dataset) - 1)
-            random_fractal_img = fractal_dataset[rand_idx][0]
+            random_fractal_img = fractal_dataset[rand_idx]
             combined_img, mixed_img, lam = self.utils.augment_pipeline(
                 original_img,
                 gen_img,

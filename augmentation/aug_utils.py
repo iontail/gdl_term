@@ -116,11 +116,17 @@ class Utils:
         else:
             lam = np.float32(1.0)
 
-        lam_reshape = lam
+        if base_img.size != fractal.size:
+            fractal = fractal.resize(base_img.size)
 
-        mix_data = lam_reshape * fractal + (1.0 - lam_reshape) * base_img
+        base_arr = np.array(base_img, dtype=np.float32) / 255.0
+        fract_arr = np.array(fractal, dtype=np.float32) / 255.0
 
-        return mix_data.astype(np.float32), lam
+        mix_arr = lam * fract_arr + (1.0 - lam) * base_arr
+        mix_arr = np.clip(mix_arr * 255.0, 0, 255).astype(np.uint8)
+        mixed_img = Image.fromarray(mix_arr)
+
+        return mixed_img, lam
     
     @staticmethod
     def augment_pipeline(

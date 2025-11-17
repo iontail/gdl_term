@@ -12,7 +12,7 @@ def extract_numbers(base_directory='./datasets'):
     # Original 분석
     print("\n[1] Original 데이터 번호 분석")
     print("-" * 80)
-    original_dir = os.path.join(base_directory, 'cifar100/train/apple')
+    original_dir = os.path.join(base_directory, 'original/apple')
     
     if os.path.exists(original_dir):
         files = sorted(os.listdir(original_dir))
@@ -75,6 +75,8 @@ def extract_numbers(base_directory='./datasets'):
             print("  - Generated는 ImageNet 데이터 (다른 ID 범위)")
     
     print("\n" + "=" * 80)
+    print(orig_numbers)
+    print(gen_numbers)
 
 
 if __name__ == "__main__":

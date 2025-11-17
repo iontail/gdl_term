@@ -23,7 +23,7 @@ from multiprocessing import Pool
 from datetime import datetime
 
 from scheduler import get_scheduler
-from load_data import load_data_subset
+from augment_data import load_data_subset
 from logger import plotting, copy_script_to_folder, AverageMeter, RecorderMeter, time_string, convert_secs2time
 from augmentation.new_augment import Mixer
 

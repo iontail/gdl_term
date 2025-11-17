@@ -36,6 +36,7 @@
     mkdir fractal
     mkdir blended
     mkdir generated
+    mkdir original
     
     gdown 1TsXi6THJSpcXKna3fkgZwNTJFEXA8ehZ
     unzip concatenated.zip
@@ -48,7 +49,10 @@
     unzip blended.zip
 
     gdown 1Ewb4sOfJi27VpIxBjhX_rEnPJGlQ97eG
-    uizip generated
+    unzip generated.zip
+
+    gdown 1BpGjSI1dTHj1SoR264LCKKXiN_GgadFY
+    unzip original.zip
 
     ```
 
@@ -78,7 +82,7 @@ python main.py --dataset cifar100 \
     --decay 0.0001 \
     --epochs 300 \
     --schedule 100 200 \
+    --use_wandb
     --train fractal_mixup \
     --fractal_alpha 0.2 \
     --active_lam \
-    --use_wandb
