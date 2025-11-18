@@ -3,7 +3,7 @@ from augmentation.new_augment import Mixer
 if __name__ == "__main__":
     img_size = 32
     ratio = 0.5
-    alpha = 0.2
+    alpha = 0.0
     active_lam = False
     retain_lam = False
 

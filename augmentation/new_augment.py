@@ -42,7 +42,7 @@ class Mixer(Dataset):
                  img_size,
                  load: bool = True,
                  ratio: float = 0.5,
-                 alpha=0.2,
+                 alpha=0.0,
                  active_lam=False,
                  retain_lam=False
                  ):

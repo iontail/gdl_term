@@ -23,7 +23,6 @@ from multiprocessing import Pool
 from datetime import datetime
 
 from scheduler import get_scheduler
-from augment_data import load_data_subset
 from logger import plotting, copy_script_to_folder, AverageMeter, RecorderMeter, time_string, convert_secs2time
 from augmentation.new_augment import Mixer
 
@@ -560,11 +559,11 @@ def main():
     print_log("torch  version : {}".format(torch.__version__), log)
     print_log("cudnn  version : {}".format(torch.backends.cudnn.version()), log)
 
-    if args.datasets in ['cifar10', 'cifar100']:
+    if args.dataset in ['cifar10', 'cifar100']:
         args.img_size = 32
 
     # mixer = Mixer(img_size=args.img_size, load=True, ratio=0.5, alpha=0.2, active_lam=False, retain_lam=False)
-    mixer = Mixer(img_size=args.img_size, load=True)
+    mixer = Mixer(img_size=args.img_size, load=True, )
 
 
     if args.dataset in ['cifar10', 'cifar100']:

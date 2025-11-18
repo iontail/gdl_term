@@ -8,6 +8,8 @@
 models/*.pyc
 !augmentation/*
 augmentation/*.pyc
+!trash/*
+trash/*.pyc
 !unit_test/*
 !checkpoint/*
 saliency.py

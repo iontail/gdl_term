@@ -68,12 +68,11 @@ bash script/train.sh
 
 ```bash
 python main.py --dataset cifar100 \
-    --train_org_dir ./datasets/cifar100/train \
-    --train_aug_dir ./datasets/concat \
-    --test_dir ./datasets/cifar100/test \
+    --train_org_dir ./datasets/mixed/\
+    --test_dir ./datasets/cifar100/test\
     --root_dir ./output \
     --fractal_img_dir ./datasets/fractal \
-    --workers 8 \
+    --workers 4 \
     --labels_per_class 500 \
     --arch preactresnet18 \
     --learning_rate 0.1 \
@@ -83,6 +82,3 @@ python main.py --dataset cifar100 \
     --epochs 300 \
     --schedule 100 200 \
     --use_wandb
-    --train fractal_mixup \
-    --fractal_alpha 0.2 \
-    --active_lam \

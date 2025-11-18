@@ -7,8 +7,15 @@ from active_fractal import mix_fractal
 
 class Utils:
     @staticmethod
-    def load_img(dir_path, img_size):
-        dataset = datasets.ImageFolder(dir_path, transform=transforms.Compose([transforms.Resize((img_size, img_size))]))
+    def load_img(dir_path, img_size, transform_compose = None):
+        if transform_compose is None:
+            transform = transforms.Compose([transforms.Resize((img_size, img_size))])
+        else:
+            transform = transforms.Compose(
+                [transforms.Resize((img_size, img_size))] + transform_compose.transforms
+            )
+
+        dataset = datasets.ImageFolder(dir_path, transform=transform)
         return dataset
     
     @staticmethod
@@ -134,14 +141,14 @@ class Utils:
         overlay_img,
         ratio: float = 0.5,
         fractal_img = None,
-        alpha: float = 0.2,
+        alpha: float = 0.0,
         active_lam: bool = False,
         retain_lam: bool = False
     ):
         
         combined_img = Utils.combine_img_random_mask(base_img, overlay_img, ratio)
 
-        if fractal_img is not None:
+        if fractal_img is not None and ratio > 0.0:
             mixed_img, lam = Utils.mix_fractal(combined_img, fractal_img, alpha, active_lam, retain_lam)
         else:
             mixed_img = combined_img
