@@ -50,7 +50,7 @@ class Utils:
         # set K(the patch number)
         # bigger the ratio is, more possible having many patch
         min_patches = 1
-        max_patches = max(1, int(10 * ratio))  # max number = 10 * ratio
+        max_patches = max((1, 5, int(ratio * 5)))  # max number = 10 * ratio
         K = random.randint(min_patches, max_patches)
 
         # assign each patch area
@@ -66,7 +66,7 @@ class Utils:
                 continue
 
             # preventing too much small or big patch
-            min_patch_area = max(1, int(0.05 * total_area))  # at least 5%
+            min_patch_area = max(1, int(0.05d * total_area))  # at least 10%
             max_patch_area = int(0.5 * target_area)       
             area_i = int(np.clip(area_i, min_patch_area, max_patch_area))
 
