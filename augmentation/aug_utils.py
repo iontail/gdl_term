@@ -66,7 +66,7 @@ class Utils:
                 continue
 
             # preventing too much small or big patch
-            min_patch_area = max(1, int(0.05d * total_area))  # at least 10%
+            min_patch_area = max(1, int(0.05 * total_area))  # at least 10%
             max_patch_area = int(0.5 * target_area)       
             area_i = int(np.clip(area_i, min_patch_area, max_patch_area))
 
