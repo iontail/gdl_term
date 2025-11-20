@@ -68,7 +68,8 @@ bash script/train.sh
 
 ```bash
 python main.py --dataset cifar100 \
-    --train_org_dir ./datasets/mixed/\
+    --train_org_dir ./datasets/cifar100/train \
+    --train_aug_dir ./datasets/mixed \
     --test_dir ./datasets/cifar100/test\
     --root_dir ./output \
     --fractal_img_dir ./datasets/fractal \
@@ -81,4 +82,5 @@ python main.py --dataset cifar100 \
     --decay 0.0001 \
     --epochs 300 \
     --schedule 100 200 \
-    --use_wandb
+    --enlarge_dataset \
+    --use_wandb 

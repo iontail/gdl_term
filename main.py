@@ -75,7 +75,7 @@ parser.add_argument('--root_dir',
                     help='folder where results are to be stored')
 parser.add_argument('--labels_per_class',
                     type=int,
-                    default=5000,
+                    default=500,
                     metavar='NL',
                     help='labels_per_class')
 parser.add_argument('--valid_labels_per_class',
@@ -83,6 +83,8 @@ parser.add_argument('--valid_labels_per_class',
                     default=0,
                     metavar='NL',
                     help='validation labels_per_class')
+parser.add_argument('--enlarge_dataset', action='store_true',
+                    help='enlarge dataset by augmentations. If set False, use subst which is same as original dataset size')
 
 # Model
 parser.add_argument('--arch',
@@ -592,7 +594,8 @@ def main():
         labels_per_class=args.labels_per_class,
         valid_labels_per_class=args.valid_labels_per_class,
         train_mode=args.train,
-        fractal_dataset=fractal_dataset_obj
+        fractal_dataset=fractal_dataset_obj,
+        enlarge_dataset=args.enlarge_dataset
         )
     
     

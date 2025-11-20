@@ -121,8 +121,12 @@ class Mixer(Dataset):
             #original_img.save(os.path.join(label_dirs['original_resized'], origin_file_name))
 
 
-            rand_idx = random.randint(0, len(fractal_dataset) - 1)
-            random_fractal_img = fractal_dataset[rand_idx]
+            if fractal_dataset is None or len(fractal_dataset) == 0:
+                random_fractal_img = None
+            else:
+                rand_idx = random.randint(0, len(fractal_dataset) - 1)
+                random_fractal_img = fractal_dataset[rand_idx]
+
             combined_img, mixed_img, lam = self.utils.augment_pipeline(
                 original_img,
                 gen_img,
@@ -151,7 +155,8 @@ class Mixer(Dataset):
                       labels_per_class=100,
                       valid_labels_per_class=500,
                       train_mode='vanilla',
-                      fractal_dataset=None
+                      fractal_dataset=None,
+                      enlarge_dataset=False
                       ):
         
         if dataset == 'cifar10':
@@ -207,6 +212,7 @@ class Mixer(Dataset):
 
                 print(f"Loading augmented data from: {train_root_2}")
                 if self.augmented_dataset is not None:
+                    self.augmented_dataset.transform = train_transform
                     train_data_2 = self.augmented_dataset
                 elif aug_data_dir is not None:
                     train_data_2 = datasets.ImageFolder(train_root_2, transform=train_transform)
@@ -267,33 +273,49 @@ class Mixer(Dataset):
             sampler_unlabelled = SubsetRandomSampler(indices_unlabelled)
             return sampler_train, sampler_valid, sampler_unlabelled
 
-   
-        train_sampler, valid_sampler, unlabelled_sampler = get_sampler(train_data.targets, labels_per_class, valid_labels_per_class)
-
-
-        labelled = torch.utils.data.DataLoader(train_data,
+        if enlarge_dataset:
+            print("Enlarging dataset by using all augmented data for training.")
+            labelled = torch.utils.data.DataLoader(train_data,
+                                                batch_size=batch_size,
+                                                shuffle=True,
+                                                num_workers=workers,
+                                                pin_memory=True)
+            validation = None
+            unlabelled = None
+            test = torch.utils.data.DataLoader(test_data,
                                             batch_size=batch_size,
-                                            sampler=train_sampler,
                                             shuffle=False,
                                             num_workers=workers,
                                             pin_memory=True)
-        validation = torch.utils.data.DataLoader(train_data,
+
+        else:
+            train_sampler, valid_sampler, unlabelled_sampler = get_sampler(train_data.targets, labels_per_class, valid_labels_per_class)
+
+
+            labelled = torch.utils.data.DataLoader(train_data,
                                                 batch_size=batch_size,
-                                                sampler=valid_sampler,
+                                                sampler=train_sampler,
                                                 shuffle=False,
                                                 num_workers=workers,
                                                 pin_memory=True)
-        unlabelled = torch.utils.data.DataLoader(train_data,
-                                                batch_size=batch_size,
-                                                sampler=unlabelled_sampler,
-                                                shuffle=False,
-                                                num_workers=workers,
-                                                pin_memory=True)
-        test = torch.utils.data.DataLoader(test_data,
-                                        batch_size=batch_size,
-                                        shuffle=False,
-                                        num_workers=workers,
-                                        pin_memory=True)
+            validation = torch.utils.data.DataLoader(train_data,
+                                                    batch_size=batch_size,
+                                                    sampler=valid_sampler,
+                                                    shuffle=False,
+                                                    num_workers=workers,
+                                                    pin_memory=True)
+            unlabelled = torch.utils.data.DataLoader(train_data,
+                                                    batch_size=batch_size,
+                                                    sampler=unlabelled_sampler,
+                                                    shuffle=False,
+                                                    num_workers=workers,
+                                                    pin_memory=True)
+            test = torch.utils.data.DataLoader(test_data,
+                                            batch_size=batch_size,
+                                            shuffle=False,
+                                            num_workers=workers,
+                                            pin_memory=True)
+        print(f"Actual train dataset size: {len(labelled.dataset)}")
 
         return labelled, validation, unlabelled, test, num_classes
 
