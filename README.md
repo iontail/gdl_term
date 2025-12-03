@@ -56,7 +56,7 @@ apt update && apt install -y tmux unzip
 ```
 
 #### 3. Weights & Biases Setup
-
+This project uses WandB for experiment tracking.
 ```bash
 wandb login
 ```
