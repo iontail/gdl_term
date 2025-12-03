@@ -1,13 +1,13 @@
 <p align="center">
   <h1 align="center">Rethinking Diffusion-Based Augmentation: Why Single Prompt Fails</h1>
   <p align="center">
-    <a>Chanhee Lee</a>
+    <a>Chanhee Lee*</a>
     ·
-    <a>Jeonghwan Cho</a>
+    <a>Jeonghwan Cho*</a>
     ·
-    <a>Suhyun Kim</a>
+    <a>Suhyun Kim*</a>
     ·
-    <a>Jungyeon Kim</a>
+    <a>Jungyeon Kim*</a>
   </p>
   <p align="center">
     <i>Sungkyunkwan University · Department of Applied Artificial Intelligence</i><br>
