@@ -174,9 +174,8 @@ Unlike naive concatenation, we propose a semantic-aware blending strategy. Using
 ## 🙏 Acknowledgements
 This project is largely inspired by and built upon the following works:
 
-[DiffuseMix: Label-Preserving Data Augmentation with Diffusion Models](https://github.com/khawar-islam/diffuseMix)
-
-[PuzzleMix: Exploiting Saliency and Local Statistics for Optimal Mixup](https://github.com/snu-mllab/PuzzleMix)
+* [DiffuseMix](https://github.com/khawar-islam/diffuseMix)
+* [PuzzleMix](https://github.com/snu-mllab/PuzzleMix)
 
 We thank the authors for their amazing contributions to the community. 
 
