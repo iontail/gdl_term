@@ -34,7 +34,6 @@ CIFAR100_CLASSES = [
     'wardrobe', 'whale', 'willow_tree', 'wolf', 'woman', 'worm'
 ]
 
-
 class CLIPBlender:
     def __init__(self, device='cuda', clip_model='ViT-B/32'):
         self.device = device
