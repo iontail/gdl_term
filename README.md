@@ -1,86 +1,84 @@
+# IGL Term Project
+<p align="center">
+  <h1 align="center">Data Augmentation</h1>
+  <p align="center">
+    <a>Chanhee Lee</a>
+    ·
+    <a>Jeonghwan Cho</a>
+    ·
+    <a>Suhyun Kim</a>
+    ·
+    <a>Jungyeon Kim</a>
+  </p>
+  <p align="center">
+    <i>Sungkyunkwan University · Department of Applied Artificial Intelligence</i><br>
+    <i>2025-Fall Generative Deep Learning Course Term Project</i>
+  </p>
+</p>
 
-## 📦 Installation (colab의 경우 git clone만 해도 될수도)
+## 📝 Abstract
 
-0.  *** puzzlemix repo 참고 ***
-1.  **리포지토리 클론:**
-    ```bash
-    git clone https://github.com/ai-cho/GDTP.git
-    cd GDTP
-    ```
+blank
 
-2.  **Conda 환경 생성 및 PyTorch 설치:**
-    이 코드는 `Python 3.10` 및 `CUDA 12.1` 환경에서 테스트되었습니다.
+## ✅ TO DO List
+- [ ] Debug the default learning framework (code file)
+- [ ] Implement our augmentation methods
+- [ ] Find the optimal prompts
 
-    ```bash
-    # 1. Conda 환경 생성
-    conda create -n gdtp python=3.10 -y
-    
-    # 2. 환경 활성화
-    conda activate gdtp
-    
-    # 3. PyTorch (CUDA 12.1) 설치
-    conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
-    ```
+## 1. Installation
 
-3.  **추가 라이브러리 설치 및 데이터 다운로드:**
-    ```bash
-    pip install gco-wrapper matplotlib numpy six wandb tqdm gdown
-    apt update && apt install -y tmux
-    apt update && apt install -y unzip
-    wandb login
+To set up the project, follow these steps:
 
-    python download_cifar100.py
-    mkdir datasets
-    cd datasets
-    mkdir concat
-    mkdir fractal
-    mkdir blended
-    mkdir generated
-    mkdir original
-    
-    gdown 1TsXi6THJSpcXKna3fkgZwNTJFEXA8ehZ
-    unzip concatenated.zip
+1. Clone the repository:
 
-    #gdown 1LDh58LuQ9HkAjTliVv7tzCmgVZ9zOrCS 
-    gdown 1c7HVPiF9L0dAV3bG5Y20fDiQPrvHzhj1
-    unzip deviantart.zip
+   ```bash
+   git clone https://github.com/iontail/igl_term.git
+   ```
 
-    gdown 1oxPibnC2OiFRC_TjccH-dmPWw2RNp12v
-    unzip blended.zip
+2. Navigate to the project directory:
 
-    gdown 1Ewb4sOfJi27VpIxBjhX_rEnPJGlQ97eG
-    unzip generated.zip
+   ```bash
+   cd igl_term
+   ```
 
-    gdown 1BpGjSI1dTHj1SoR264LCKKXiN_GgadFY
-    unzip original.zip
+3. Create a new virtual environment and install dependencies:
 
-    ```
+   ```bash
+   conda create -n igl_term python=3.10
+   conda activate igl_term
+   pip install -r requirements.txt
+   ```
+
+4. Set up the dataset and run the code:
+
+   ```bash
+   blank
+   ```
+
+
+## 📁 Project Structure
+```
+data/                      # Dataset directory
+
+data_utils/
+├── dataset.py             # Dataset functions
+└── dataloader.py          # DataLoader implementation
+
+models/
+├── resnet.py              # ResNet model
+├── preactresnet.py        # PreActivation ResNet model
+└── get_model.py           # Model loader
+
+utils/
+├── scheduler.py           # Learning rate scheduler
+└── augmentation/          # Data augmentation modules (!important)
+    └── ...
+
+train.py                   # Main training script
+arguments.py               # CLI argument parser
+trainer.py                 # Trainer class
+text_prompt.py             # Text prompt testing
+```
 
 ---
-
-## 👟 Training
-
-아래는 `preactresnet18` 아키텍처를 사용하여 CIFAR-100 데이터셋으로 모델을 학습시키는 예시 명령어입니다.
-
-```
-bash script/train.sh
-```
-
-```bash
-python main.py --dataset cifar100 \
-    --train_org_dir ./datasets/cifar100/train \
-    --train_aug_dir ./datasets/mixed \
-    --test_dir ./datasets/cifar100/test\
-    --root_dir ./output \
-    --fractal_img_dir ./datasets/fractal \
-    --workers 4 \
-    --labels_per_class 500 \
-    --arch preactresnet18 \
-    --learning_rate 0.1 \
-    --batch_size 128 \
-    --momentum 0.9 \
-    --decay 0.0001 \
-    --epochs 300 \
-    --schedule 100 200 \
-    --enlarge_dataset \
-    --use_wandb 
+We thank [DiffuseMix.Pytorch](https://github.com/khawar-islam/diffuseMix.git) for their amazing works!
