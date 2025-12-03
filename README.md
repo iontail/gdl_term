@@ -34,7 +34,7 @@ This codebase has been tested with **Python 3.10** and **CUDA 12.1**.
 #### 1. Clone the Repository
 
 ```bash
-git clone [https://github.com/iontail/gdl_term.git](https://github.com/iontail/gdl_term.git)
+git clone https://github.com/iontail/gdl_term.git
 cd gdl_term
 ```
 
