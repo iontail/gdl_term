@@ -43,6 +43,28 @@ In this work, we conduct a controlled study to dissect the components of diffusi
 | **CLIP-Guided Semantic Hybrid Blending (SHB)** | Improve semantic fidelity over naive deterministic mixing. | Use the CLIP visual encoder to identify and replace **semantically low-fidelity regions** in generated images with content from the original image, guided by a dynamic mask. |
 ---
 
+## 🧩 Project Structure
+
+```
+gdl_term/
+├── augmentation/
+│   ├── active_fractal.py
+│   ├── augment_data.py
+│   ├── fractal_aug.py               # Integration of fractal images
+│   ├── fractal_utils.py
+│   ├── scheduler.py                 # Progressive augmentation scheduling (Linear, Warmup, Step)
+│   └── semantic_hybrid_blending.py  # CLIP-Guided Semantic Hybrid Blending (SHB) implementation
+├── models/
+│   ├── preactresnet.py              # PreActResNet implementation (Default)
+│   └── wide_resnet.py               # WideResNet implementation
+├── scripts/
+│   ├── pca.sh                       # running PCA visualization
+│   └── train.sh                     # Quick start training script
+└── utils/
+    ├── download_cifar100.py
+    └── pca_clip.py                  # CLIP embedding extraction and PCA visualization
+```
+
 ## ⚙️ Installation
 
 This codebase has been tested with **Python 3.10** and **CUDA 12.1**.
@@ -155,29 +177,6 @@ python main.py \
 
 </details>
 <br>
-
-
-## 🧩 Project Structure
-
-```
-gdl_term/
-├── augmentation/
-│   ├── active_fractal.py
-│   ├── augment_data.py
-│   ├── fractal_aug.py               # Integration of fractal images
-│   ├── fractal_utils.py
-│   ├── scheduler.py                 # Progressive augmentation scheduling (Linear, Warmup, Step)
-│   └── semantic_hybrid_blending.py  # CLIP-Guided Semantic Hybrid Blending (SHB) implementation
-├── models/
-│   ├── preactresnet.py              # PreActResNet implementation (Default)
-│   └── wide_resnet.py               # WideResNet implementation
-├── scripts/
-│   ├── pca.sh                       # running PCA visualization
-│   └── train.sh                     # Quick start training script
-└── utils/
-    ├── download_cifar100.py
-    └── pca_clip.py                  # CLIP embedding extraction and PCA visualization
-```
 
 ## 🙏 Acknowledgements
 This project is inspired by and builds upon the foundational work of the following open-source contributions:
