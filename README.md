@@ -151,13 +151,21 @@ python main.py \
 ```
 gdl_term/
 ├── augmentation/
+│   ├── active_fractal.py
+│   ├── augment_data.py
 │   ├── fractal_aug.py             
-│   ├── fractal_utils.py           
+│   ├── fractal_utils.py
+│   ├── scheduler.py           
 │   └── semantic_hybrid_blending.py
 ├── models/
-|   ├── init.py
 │   ├── preactresnet.py         # PreActResNet implementation (Default)
 │   └── wide_resnet.py          # WideResNet implementation
+├── scripts/
+│   ├── pca.sh
+│   └── train.sh
+├── utils/
+│   ├── download_cifar100.py
+│   └── pca_clip.py
 ```
 
 ## 🔍 Method Overview
