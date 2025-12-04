@@ -1,8 +1,8 @@
 CUDA_VISIBLE_DEVICES=0 python main.py --dataset cifar100 \
-    --train_org_dir /workspace/_GDtp/dataset_download/datasets/cifar100/train \
-    --train_aug_dir /workspace/_GDtp/diffuseMix/our_result/gradcam_resnet \
-    --test_dir /workspace/_GDtp/dataset_download/datasets/cifar100/test \
-    --root_dir output/ours_gradcam_resnet_no_fractal \
+    --train_org_dir /datasets/cifar100/train \
+    --train_aug_dir /diffuseMix/our_result/ \
+    --test_dir /datasets/cifar100/test \
+    --root_dir output/ours \
     --labels_per_class 500 \
     --arch preactresnet18 \
     --learning_rate 0.1 \
@@ -13,4 +13,4 @@ CUDA_VISIBLE_DEVICES=0 python main.py --dataset cifar100 \
     --gammas 0.1 0.1 \
     --train vanilla \
     --use_wandb True \
-    --wandb_project ours_gradcam_resnet_no_fractal
+    --wandb_project ours

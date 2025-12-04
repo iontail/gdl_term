@@ -1,4 +1,4 @@
-from augmentation.new_augment import Mixer
+from fractal_utils import Mixer
 
 if __name__ == "__main__":
     img_size = 32
