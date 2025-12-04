@@ -19,12 +19,28 @@
 ---
 
 
-## 📝 Abstract
+### 📝 Project Overview
 
 Diffusion models have emerged as a powerful tool for data augmentation, synthesizing high-quality samples that preserve class semantics. However, the precise factors driving their performance—specifically in restricted settings like **single-prompt generation**—remain underexplored.
 
 In this work, we conduct a controlled study to dissect the components of diffusion-based augmentation. We analyze the impact of **prompt diversity**, **mixing strategies**, and the integration of **synthetic fractals**. Our findings reveal that in the single-prompt regime, diffusion augmentation often fails to broaden the training distribution effectively. To address semantic inconsistencies, we introduce **CLIP-Guided Semantic Hybrid Blending**, a method that selectively replaces low-fidelity regions in generated images with original content.
 
+
+### Key Findings (Single-Prompt Regime)
+
+* Diffusion-generated samples **do not significantly broaden the training data distribution** in this regime; they tend to densify an already occupied feature space.
+* **Progressive Augmentation Scheduling** (Linear, Warmup, Step) and **Fractal Image Integration** fail to recover the performance of the non-augmented baseline (Vanilla model).
+* The overall performance gain reported in prior work appears to stem not from precise semantic mixing or enhanced diversity, but from the **large-scale offline generation** that creates a vast pool of augmented, challenging variations.
+
+---
+
+## 💡 Our Contributions & Methods
+
+| Component | Goal | Approach |
+| :--- | :--- | :--- |
+| **Progressive Augmentation Scheduling** | Investigate how the timing and ratio of augmented data introduction affect learning. | Implemented **Linear, Warmup, and Step schedules** to dynamically control the blend ratio $\rho(t)$ over epochs. |
+| **Integration of Fractal Images** | Isolate the effect of non-semantic, structural diversity. | Incorporated **fractal patterns** into the hybrid augmentation pipeline to test robustness to perturbations. |
+| **CLIP-Guided Semantic Hybrid Blending (SHB)** | Improve semantic fidelity over naive deterministic mixing. | Use the CLIP visual encoder to identify and replace **semantically low-fidelity regions** in generated images with content from the original image, guided by a dynamic mask. |
 ---
 
 ## ⚙️ Installation
@@ -67,7 +83,7 @@ We provide scripts to download the CIFAR-100 dataset and the pre-generated augme
 #### 1. Download Standard Datasets
 
 ```bash
-python download_cifar100.py
+python utils/download_cifar100.py
 ```
 
 #### 2. Setup Directory Structure & Download Augmented Data
@@ -78,36 +94,31 @@ mkdir -p datasets/concat datasets/fractal datasets/blended datasets/generated da
 cd datasets
 
 # Concatenated Samples
-gdown 1TsXi6THJSpcXKna3fkgZwNTJFEXA8ehZ
-unzip concatenated.zip
+gdown 1TsXi6THJSpcXKna3fkgZwNTJFEXA8ehZ; unzip concatenated.zip
 
 # Fractal Images (DeviantArt)
-gdown 1c7HVPiF9L0dAV3bG5Y20fDiQPrvHzhj1
-unzip deviantart.zip
+gdown 1c7HVPiF9L0dAV3bG5Y20fDiQPrvHzhj1; unzip deviantart.zip
 
 # Blended Samples
-gdown 1oxPibnC2OiFRC_TjccH-dmPWw2RNp12v
-unzip blended.zip
+gdown 1oxPibnC2OiFRC_TjccH-dmPWw2RNp12v; unzip blended.zip
 
 # Generated Samples (Diffusion Output)
-gdown 1Ewb4sOfJi27VpIxBjhX_rEnPJGlQ97eG
-unzip generated.zip
+gdown 1Ewb4sOfJi27VpIxBjhX_rEnPJGlQ97eG; unzip generated.zip
 
 # Original CIFAR-100 Images (Sorted)
-gdown 1BpGjSI1dTHj1SoR264LCKKXiN_GgadFY
-unzip original.zip
+gdown 1BpGjSI1dTHj1SoR264LCKKXiN_GgadFY; unzip original.zip
 ```
 
 ## 🚀 Training
 We use PreActResNet18 as the backbone architecture. You can run the training script directly or via the provided shell script.
 
-#### Quick Start
+#### Quick Start (Default Configuration)
 ```bash
 bash script/train.sh
 ```
 
 #### Custom Training Command
-To run a specific configuration (e.g., using fractal mixing with an enlarged dataset):
+To run a specific experiment, such as the semantic hybrid blending with an enlarged dataset:
 
 ```bash
 python main.py \
@@ -153,35 +164,23 @@ gdl_term/
 ├── augmentation/
 │   ├── active_fractal.py
 │   ├── augment_data.py
-│   ├── fractal_aug.py             
+│   ├── fractal_aug.py               # Integration of fractal images
 │   ├── fractal_utils.py
-│   ├── scheduler.py           
-│   └── semantic_hybrid_blending.py
+│   ├── scheduler.py                 # Progressive augmentation scheduling (Linear, Warmup, Step)
+│   └── semantic_hybrid_blending.py  # CLIP-Guided Semantic Hybrid Blending (SHB) implementation
 ├── models/
-│   ├── preactresnet.py         # PreActResNet implementation (Default)
-│   └── wide_resnet.py          # WideResNet implementation
+│   ├── preactresnet.py              # PreActResNet implementation (Default)
+│   └── wide_resnet.py               # WideResNet implementation
 ├── scripts/
-│   ├── pca.sh
-│   └── train.sh
-├── utils/
-│   ├── download_cifar100.py
-│   └── pca_clip.py
+│   ├── pca.sh                       # running PCA visualization
+│   └── train.sh                     # Quick start training script
+└── utils/
+    ├── download_cifar100.py
+    └── pca_clip.py                  # CLIP embedding extraction and PCA visualization
 ```
 
-## 🔍 Method Overview
-
-#### 1. Progressive Augmentation Scheduling
-We investigate how the timing and ratio of introducing augmented data affect learning. We implemented Linear, Warmup, and Step scheduling strategies to control the blend ratio $\rho(t)$ over epochs.
-
-#### 2. Integration of Fractal Images
-To introduce non-semantic structural diversity, we integrate fractal patterns into the training loop. This is handled by the FractalMixDataset class in augmentation/fractal_utils.py.
-
-#### 3. CLIP-Guided Semantic Hybrid Blending
-Unlike naive concatenation, we propose a semantic-aware blending strategy. Using CLIP, we identify regions in diffusion-generated images that lack semantic alignment with the target class and replace them with the original content. This ensures high fidelity and reduces artifacts. (See utils/semantic_hybrid_blending.py for implementation details)
-
 ## 🙏 Acknowledgements
-This project is largely inspired by and built upon the following works:
-
+This project is inspired by and builds upon the foundational work of the following open-source contributions:
 * [DiffuseMix](https://github.com/khawar-islam/diffuseMix)
 * [PuzzleMix](https://github.com/snu-mllab/PuzzleMix)
 
