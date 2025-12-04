@@ -23,7 +23,7 @@ from multiprocessing import Pool
 from datetime import datetime
 
 from scheduler import get_scheduler
-from logger import plotting, copy_script_to_folder, AverageMeter, RecorderMeter, time_string, convert_secs2time
+from utils.logger import plotting, copy_script_to_folder, AverageMeter, RecorderMeter, time_string, convert_secs2time
 from augmentation.new_augment import Mixer
 
 model_names = sorted(
