@@ -25,3 +25,4 @@ datasets
 *arch*
 experiments
 __pycache__
+!scripts/*
