@@ -53,7 +53,7 @@ gdl_term/
 │   ├── fractal_aug.py               # Integration of fractal images
 │   ├── fractal_utils.py
 │   ├── scheduler.py                 # LR_scheduler
-│   ├── diffusemix_scheduler.py     # Progressive augmentation scheduling (Linear, Warmup, Step)
+│   ├── diffusemix_scheduler.py      # Progressive augmentation scheduling (Linear, Warmup, Step)
 │   └── semantic_hybrid_blending.py  # CLIP-Guided Semantic Hybrid Blending (SHB) implementation  
 ├── models/
 │   ├── preactresnet.py              # PreActResNet implementation (Default)
