@@ -330,6 +330,37 @@ def accuracy(output, target, topk=(1, )):
         res.append(correct_k.mul_(100.0 / batch_size))
     return res
 
+#curriculum learning 함수 
+def get_blend_ratio(epoch, total_epochs, strategy='linear'):
+    """
+    현재 Epoch에 따라 Blended 이미지의 비율(0.0 ~ 1.0)을 반환합니다.
+    0.0: 100% Original
+    1.0: 100% Blended
+    """
+    #Linear
+    if strategy == 'linear':
+        return epoch / total_epochs
+    
+    #Ste
+    elif strategy == 'step':
+        if epoch < 100: return 0.0  
+        if epoch < 200: return 0.5  
+        return 1.0                  #
+    
+    elif strategy == 'concat':
+        return 
+        
+    #Warmup
+    elif strategy == 'warmup':
+        warmup_epochs = 50
+        if epoch < warmup_epochs:
+            return 0.0
+        else:
+            ratio = (epoch - warmup_epochs) / (total_epochs - warmup_epochs)
+            return min(1.0, ratio)
+            
+    return 0.5 
+
 
 bce_loss = nn.BCELoss().cuda()
 bce_loss_sum = nn.BCELoss(reduction='sum').cuda()
